@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { signup as apiSignup, checkNeedsSetup } from '../services/api';
+import { signup as apiSignup } from '../services/api';
 
 export default function Signup() {
   const { login, isAuthenticated } = useAuth();
@@ -21,11 +21,7 @@ export default function Signup() {
   const fileRef               = useRef();
 
   useEffect(() => {
-    if (isAuthenticated) { navigate('/'); return; }
-    // Redirect to login if setup already done
-    checkNeedsSetup()
-      .then(d => { if (!d.needsSetup) navigate('/login'); })
-      .catch(() => {});
+    if (isAuthenticated) navigate('/');
   }, [isAuthenticated, navigate]);
 
   function handleLogoChange(e) {
@@ -74,10 +70,10 @@ export default function Signup() {
         <div className="auth-logo">
           <span className="auth-logo-icon">🚛</span>
           <h1>Transport MS</h1>
-          <p>First-time Setup</p>
+          <p>Transport Management System</p>
         </div>
 
-        <h2>Set Up Your Company</h2>
+        <h2>Register Your Company</h2>
 
         {error && <div className="auth-error">{error}</div>}
 

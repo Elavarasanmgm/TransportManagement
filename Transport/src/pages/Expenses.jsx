@@ -25,7 +25,7 @@ export default function Expenses() {
   });
 
   const openAdd  = () => { setForm(emptyForm); setEditing(null); setModal(true); };
-  const openEdit = (e) => { setForm(e); setEditing(e.id); setModal(true); };
+  const openEdit = (e) => { setForm({ ...e, date: String(e.expenseDate || e.date || '').slice(0, 10) }); setEditing(e.id); setModal(true); };
 
   const handleVehicle = (id) => {
     const v = vehicles.find(v => v.id === Number(id));
@@ -100,7 +100,7 @@ export default function Expenses() {
             {filtered.map((e, i) => (
               <tr key={e.id}>
                 <td style={{ color:'#94a3b8', fontSize:'0.78rem' }}>{i+1}</td>
-                <td style={{ fontSize:'0.85rem' }}>{e.date}</td>
+                <td style={{ fontSize:'0.85rem' }}>{String(e.expenseDate || e.date || '').slice(0, 10)}</td>
                 <td>{e.vehicleName || <span style={{ color:'#94a3b8' }}>—</span>}</td>
                 <td><span className={`badge ${catColors[e.category]||'badge-gray'}`}>{e.category}</span></td>
                 <td style={{ color:'#475569' }}>{e.description || '—'}</td>
