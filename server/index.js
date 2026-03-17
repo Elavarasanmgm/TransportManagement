@@ -1,11 +1,17 @@
 require('dotenv').config();
 const express  = require('express');
 const cors     = require('cors');
-const migrate  = require('./migrate');
 
 const app = express();
 
-app.use(cors({ origin: /^http:\/\/localhost(:\d+)?$/ }));
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : null;
+
+app.use(cors({
+  origin: allowedOrigins || true,
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' })); // raised for base64 logo uploads
 
 // Routes
@@ -23,8 +29,17 @@ app.use('/api/dashboard',     require('./routes/dashboard'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-const PORT = process.env.PORT || 5000;
+if (require.main === module) {
+  // Traditional server mode (local development)
+  const migrate = require('./migrate');
+  const PORT = process.env.PORT || 5000;
+  migrate()
+    .then(() => app.listen(PORT, () => console.log(`Transport API running on port ${PORT}`)))
+    .catch(err => { console.error('Migration failed:', err.message); process.exit(1); });
+} else {
+  // Serverless mode (Vercel) — run migration as a non-blocking side effect
+  const migrate = require('./migrate');
+  migrate().catch(err => console.error('Migration error:', err.message));
+}
 
-migrate()
-  .then(() => app.listen(PORT, () => console.log(`Transport API running on port ${PORT}`)))
-  .catch(err => { console.error('Migration failed:', err.message); process.exit(1); });
+module.exports = app;

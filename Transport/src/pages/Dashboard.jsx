@@ -61,7 +61,7 @@ export default function Dashboard() {
   ), [rentals, selVehicle, fromDate, toDate]);
 
   const filteredExpenses = useMemo(() => expenses.filter(e =>
-    (selVehicle === 'all' || String(e.vehicleId) === String(selVehicle)) && inRange(e.date)
+    (selVehicle === 'all' || String(e.vehicleId) === String(selVehicle)) && inRange(e.expenseDate || e.date)
   ), [expenses, selVehicle, fromDate, toDate]);
 
   const totalRevenue  = filteredRentals.reduce((s, r) => s + Number(r.totalAmount || 0), 0);
@@ -88,7 +88,7 @@ export default function Dashboard() {
       map[key].revenue += Number(r.totalAmount || 0);
     });
     filteredExpenses.forEach(e => {
-      const key = fmtDate(e.date).slice(0, 7);
+      const key = fmtDate(e.expenseDate || e.date).slice(0, 7);
       if (!map[key]) map[key] = { revenue: 0, expenses: 0 };
       map[key].expenses += Number(e.amount || 0);
     });
