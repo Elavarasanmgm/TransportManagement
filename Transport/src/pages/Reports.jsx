@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useLanguage } from '../context/LanguageContext';
 import { FileSpreadsheet, FileText, Filter, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -952,12 +953,14 @@ function ProfitLossReport({ rentals, expenses, vehicles }) {
 // ─────────────────────────────────────────────
 export default function Reports() {
   const { rentals, expenses, vehicles, drivers, attendance, customers } = useApp();
+  const { language } = useLanguage();
+  const isTamil = language === 'ta';
 
   const TABS = [
-    { id: 'customer',  label: '👤 Customer Transactions' },
-    { id: 'attendance', label: '📅 Attendance' },
-    { id: 'expenses',  label: '📉 Expenses' },
-    { id: 'pl',        label: '📈 Profit & Loss' },
+    { id: 'customer',  label: isTamil ? '👤 வாடிக்கையாளர் பரிவர்த்தனை' : '👤 Customer Transactions' },
+    { id: 'attendance', label: isTamil ? '📅 வருகை' : '📅 Attendance' },
+    { id: 'expenses',  label: isTamil ? '📉 செலவுகள்' : '📉 Expenses' },
+    { id: 'pl',        label: isTamil ? '📈 லாபம் & நட்டம்' : '📈 Profit & Loss' },
   ];
   const [activeTab, setActiveTab] = useState('customer');
 
@@ -965,8 +968,8 @@ export default function Reports() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Reports</div>
-          <div className="page-subtitle">Generate, filter and export business reports</div>
+          <div className="page-title">{isTamil ? 'அறிக்கைகள்' : 'Reports'}</div>
+          <div className="page-subtitle">{isTamil ? 'வணிக அறிக்கைகளை உருவாக்கி, வடிகட்டி, ஏற்றுமதி செய்யவும்' : 'Generate, filter and export business reports'}</div>
         </div>
       </div>
 

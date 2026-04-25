@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Plus, Search, Edit2, Trash2, X } from 'lucide-react';
 
 const statusColors = { available: 'badge-success', 'on-rent': 'badge-info', maintenance: 'badge-danger' };
@@ -13,6 +14,75 @@ const emptyForm = { name:'', type:'', regNo:'', model:'', year:'', status:'avail
 export default function Vehicles() {
   const { vehicles, addVehicle, updateVehicle, deleteVehicle, vehicleTypes, addVehicleType } = useApp();
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const isTamil = language === 'ta';
+  const txt = isTamil ? {
+    title: 'படை / வாகனங்கள்',
+    subtitle: 'பதிவு செய்யப்பட்ட வாகனங்கள்',
+    addVehicle: 'வாகனம் சேர்',
+    editVehicle: 'வாகனம் திருத்து',
+    addNewVehicle: 'புதிய வாகனம் சேர்',
+    totalFleet: 'மொத்த படை',
+    available: 'காலியாக',
+    onRent: 'வாடகையில்',
+    maintenance: 'பராமரிப்பு',
+    allStatus: 'அனைத்து நிலைகள்',
+    search: 'பெயர் அல்லது பதிவு எண் தேடு...',
+    dailyRate: 'தினசரி கட்டணம்',
+    hourlyRate: 'மணிநேர கட்டணம்',
+    year: 'ஆண்டு',
+    notAssigned: 'ஒதுக்கப்படவில்லை',
+    readOnly: 'பார்வை மட்டும்',
+    noVehicles: 'வாகனங்கள் இல்லை.',
+    vehicleType: 'வாகன வகை',
+    addNewType: 'புதிய வகை சேர்க்க…',
+    typeNameRequired: 'வகை பெயர் தேவை',
+    couldNotAddType: 'வகையை சேர்க்க முடியவில்லை',
+    regNo: 'பதிவு எண்',
+    model: 'மாடல்',
+    status: 'நிலை',
+    assignedDriver: 'ஒதுக்கப்பட்ட ஓட்டுநர்',
+    cancel: 'ரத்து',
+    update: 'புதுப்பி',
+    edit: 'திருத்து',
+    delete: 'நீக்கு',
+    save: 'சேமி',
+    deleteConfirm: 'இந்த வாகனத்தை நீக்கவா?',
+    fillRequired: 'தேவையான புலங்களை நிரப்பவும்.',
+  } : {
+    title: 'Fleet / Vehicles',
+    subtitle: 'vehicles registered',
+    addVehicle: 'Add Vehicle',
+    editVehicle: 'Edit Vehicle',
+    addNewVehicle: 'Add New Vehicle',
+    totalFleet: 'Total Fleet',
+    available: 'Available',
+    onRent: 'On Rent',
+    maintenance: 'Maintenance',
+    allStatus: 'All Status',
+    search: 'Search by name or reg no...',
+    dailyRate: 'Daily Rate',
+    hourlyRate: 'Hourly Rate',
+    year: 'Year',
+    notAssigned: 'Not assigned',
+    readOnly: 'Read-only',
+    noVehicles: 'No vehicles found.',
+    vehicleType: 'Vehicle Type',
+    addNewType: 'Add New Type…',
+    typeNameRequired: 'Type name is required',
+    couldNotAddType: 'Could not add type',
+    regNo: 'Reg. Number',
+    model: 'Model',
+    status: 'Status',
+    assignedDriver: 'Assigned Driver',
+    cancel: 'Cancel',
+    update: 'Update',
+    edit: 'Edit',
+    delete: 'Delete',
+    save: 'Save',
+    deleteConfirm: 'Delete this vehicle?',
+    fillRequired: 'Please fill required fields.',
+  };
   const isReadOnly = user?.role === 'driver';
   const [search, setSearch]     = useState('');
   const [filter, setFilter]     = useState('all');
@@ -42,8 +112,16 @@ export default function Vehicles() {
   const openAdd  = () => { setForm({ ...emptyForm, type: defaultType }); setEditing(null); setModal(true); };
   const openEdit = (v) => { setForm(v); setEditing(v.id); setModal(true); };
 
+  const statusLabel = (status) => {
+    if (!isTamil) return status;
+    if (status === 'available') return 'காலியாக';
+    if (status === 'on-rent') return 'வாடகையில்';
+    if (status === 'maintenance') return 'பராமரிப்பு';
+    return status;
+  };
+
   const handleSave = () => {
-    if (!form.regNo || !form.model) return alert('Please fill required fields.');
+    if (!form.regNo || !form.model) return alert(txt.fillRequired);
     const emoji   = typeEmojiMap[form.type] || form.emoji || '🚛';
     const payload = { ...form, emoji, name: `${form.type} - ${form.regNo}`, dailyRate: Number(form.dailyRate), hourlyRate: Number(form.hourlyRate) };
     editing ? updateVehicle(payload) : addVehicle(payload);
@@ -51,11 +129,11 @@ export default function Vehicles() {
   };
 
   const handleDelete = (id) => {
-    if (confirm('Delete this vehicle?')) deleteVehicle(id);
+    if (confirm(txt.deleteConfirm)) deleteVehicle(id);
   };
 
   async function handleAddType() {
-    if (!newTypeName.trim()) return setTypeError('Type name is required');
+    if (!newTypeName.trim()) return setTypeError(txt.typeNameRequired);
     setTypeError('');
     try {
       await addVehicleType({ name: newTypeName.trim(), emoji: newTypeEmoji });
@@ -64,7 +142,7 @@ export default function Vehicles() {
       setNewTypeEmoji('🚛');
       setAddingType(false);
     } catch (err) {
-      setTypeError(err.message || 'Could not add type');
+      setTypeError(err.message || txt.couldNotAddType);
     }
   }
 
@@ -74,11 +152,11 @@ export default function Vehicles() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Fleet / Vehicles</div>
-          <div className="page-subtitle">{vehicles.length} vehicles registered</div>
+          <div className="page-title">{txt.title}</div>
+          <div className="page-subtitle">{vehicles.length} {txt.subtitle}</div>
         </div>
         <button className="btn btn-primary" onClick={openAdd} style={{ display: isReadOnly ? 'none' : undefined }}>
-          <Plus size={16} /> Add Vehicle
+          <Plus size={16} /> {txt.addVehicle}
         </button>
       </div>
 
@@ -86,7 +164,7 @@ export default function Vehicles() {
       <div className="grid-4" style={{ marginBottom: 20 }}>
         {['all','available','on-rent','maintenance'].map(s => {
           const count = s === 'all' ? vehicles.length : vehicles.filter(v => v.status === s).length;
-          const labels = { all:'Total Fleet', available:'Available', 'on-rent':'On Rent', maintenance:'Maintenance' };
+          const labels = { all:txt.totalFleet, available:txt.available, 'on-rent':txt.onRent, maintenance:txt.maintenance };
           const colors = { all:'#1e40af', available:'#059669', 'on-rent':'#2563eb', maintenance:'#dc2626' };
           const bgs    = { all:'#eff6ff', available:'#d1fae5', 'on-rent':'#dbeafe', maintenance:'#fee2e2' };
           return (
@@ -107,13 +185,13 @@ export default function Vehicles() {
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={15} className="search-icon" />
-          <input className="search-input" placeholder="Search by name or reg no..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="search-input" placeholder={txt.search} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="form-input" style={{ width: 160 }} value={filter} onChange={e => setFilter(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="available">Available</option>
-          <option value="on-rent">On Rent</option>
-          <option value="maintenance">Maintenance</option>
+          <option value="all">{txt.allStatus}</option>
+          <option value="available">{txt.available}</option>
+          <option value="on-rent">{txt.onRent}</option>
+          <option value="maintenance">{txt.maintenance}</option>
         </select>
       </div>
 
@@ -128,7 +206,7 @@ export default function Vehicles() {
                 </div>
               </div>
               <span className={`badge ${statusColors[v.status] || 'badge-gray'}`}>
-                {v.status}
+                {statusLabel(v.status)}
               </span>
             </div>
             <div className="vehicle-card-body">
@@ -137,34 +215,34 @@ export default function Vehicles() {
               <div className="vehicle-stat">
                 <div className="vehicle-stat-item">
                   <h4>{fmt(v.dailyRate)}</h4>
-                  <p>Daily Rate</p>
+                  <p>{txt.dailyRate}</p>
                 </div>
                 <div className="vehicle-stat-item">
                   <h4>{fmt(v.hourlyRate)}</h4>
-                  <p>Hourly Rate</p>
+                  <p>{txt.hourlyRate}</p>
                 </div>
                 <div className="vehicle-stat-item">
                   <h4>{v.year}</h4>
-                  <p>Year</p>
+                  <p>{txt.year}</p>
                 </div>
               </div>
               <div style={{ marginTop: 10, fontSize: '0.82rem', color: '#64748b' }}>
-                👤 <strong>{v.driver || 'Not assigned'}</strong>
+                👤 <strong>{v.driver || txt.notAssigned}</strong>
               </div>
             </div>
             <div className="vehicle-card-footer">
               {!isReadOnly && (
                 <button className="btn btn-secondary btn-sm" onClick={() => openEdit(v)} style={{ flex:1 }}>
-                  <Edit2 size={13} /> Edit
+                  <Edit2 size={13} /> {txt.edit}
                 </button>
               )}
               {!isReadOnly && (
                 <button className="btn btn-danger btn-sm" onClick={() => handleDelete(v.id)} style={{ flex:1 }}>
-                  <Trash2 size={13} /> Delete
+                  <Trash2 size={13} /> {txt.delete}
                 </button>
               )}
               {isReadOnly && (
-                <div style={{ flex:1, textAlign:'center', fontSize:'0.8rem', color:'#94a3b8', padding:'6px 0' }}>Read-only</div>
+                <div style={{ flex:1, textAlign:'center', fontSize:'0.8rem', color:'#94a3b8', padding:'6px 0' }}>{txt.readOnly}</div>
               )}
             </div>
           </div>
@@ -172,7 +250,7 @@ export default function Vehicles() {
         {filtered.length === 0 && (
           <div className="empty-state" style={{ gridColumn:'1/-1' }}>
             <div style={{ fontSize:'3rem' }}>🚛</div>
-            <p style={{ marginTop: 8 }}>No vehicles found.</p>
+            <p style={{ marginTop: 8 }}>{txt.noVehicles}</p>
           </div>
         )}
       </div>
@@ -182,12 +260,12 @@ export default function Vehicles() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <span className="modal-title">{editing ? 'Edit Vehicle' : 'Add New Vehicle'}</span>
+              <span className="modal-title">{editing ? txt.editVehicle : txt.addNewVehicle}</span>
               <button className="close-btn" onClick={() => setModal(false)}><X size={16} /></button>
             </div>
             <div className="grid-2">
               <div className="form-group">
-                <label className="form-label">Vehicle Type *</label>
+                <label className="form-label">{txt.vehicleType} *</label>
                 <select
                   className="form-input"
                   value={form.type}
@@ -202,7 +280,7 @@ export default function Vehicles() {
                   {(vehicleTypes || []).map(t => (
                     <option key={t.id} value={t.name}>{t.emoji} {t.name}</option>
                   ))}
-                  <option value="__add_new__">➕ Add New Type…</option>
+                  <option value="__add_new__">➕ {txt.addNewType}</option>
                 </select>
 
                 {/* Inline add-type form */}
@@ -226,7 +304,7 @@ export default function Vehicles() {
                         onChange={e => setNewTypeEmoji(e.target.value)}
                         maxLength={2}
                       />
-                      <button type="button" className="btn btn-primary btn-sm" onClick={handleAddType}>Save</button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={handleAddType}>{txt.save}</button>
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setAddingType(false); setTypeError(''); }}>
                         <X size={13} />
                       </button>
@@ -236,41 +314,41 @@ export default function Vehicles() {
                 )}
               </div>
               <div className="form-group">
-                <label className="form-label">Reg. Number *</label>
+                <label className="form-label">{txt.regNo} *</label>
                 <input className="form-input" placeholder="TN01AB1234" value={form.regNo} onChange={e => setForm({...form, regNo: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Model *</label>
+                <label className="form-label">{txt.model} *</label>
                 <input className="form-input" placeholder="Tata LPT 1613" value={form.model} onChange={e => setForm({...form, model: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Year</label>
+                <label className="form-label">{txt.year}</label>
                 <input className="form-input" type="number" placeholder="2022" value={form.year} onChange={e => setForm({...form, year: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Daily Rate (₹)</label>
+                <label className="form-label">{txt.dailyRate} (₹)</label>
                 <input className="form-input" type="number" placeholder="4500" value={form.dailyRate} onChange={e => setForm({...form, dailyRate: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Hourly Rate (₹)</label>
+                <label className="form-label">{txt.hourlyRate} (₹)</label>
                 <input className="form-input" type="number" placeholder="500" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Status</label>
+                <label className="form-label">{txt.status}</label>
                 <select className="form-input" value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
-                  <option value="available">Available</option>
-                  <option value="on-rent">On Rent</option>
-                  <option value="maintenance">Maintenance</option>
+                  <option value="available">{txt.available}</option>
+                  <option value="on-rent">{txt.onRent}</option>
+                  <option value="maintenance">{txt.maintenance}</option>
                 </select>
               </div>
               <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                <label className="form-label">Assigned Driver</label>
+                <label className="form-label">{txt.assignedDriver}</label>
                 <input className="form-input" placeholder="Driver name" value={form.driver} onChange={e => setForm({...form, driver: e.target.value})} />
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave}>{editing ? 'Update' : 'Add Vehicle'}</button>
+              <button className="btn btn-secondary" onClick={() => setModal(false)}>{txt.cancel}</button>
+              <button className="btn btn-primary" onClick={handleSave}>{editing ? txt.update : txt.addVehicle}</button>
             </div>
           </div>
         </div>

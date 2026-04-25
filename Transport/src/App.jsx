@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import Dashboard from './pages/Dashboard';
@@ -65,19 +66,21 @@ function Layout() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login"  element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/*" element={
-          <PrivateRoute>
-            <AppProvider>
-              <Layout />
-            </AppProvider>
-          </PrivateRoute>
-        } />
-      </Routes>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login"  element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/*" element={
+            <PrivateRoute>
+              <AppProvider>
+                <Layout />
+              </AppProvider>
+            </PrivateRoute>
+          } />
+        </Routes>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

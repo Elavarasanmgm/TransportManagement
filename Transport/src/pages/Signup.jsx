@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signup as apiSignup } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Signup() {
   const { login, isAuthenticated } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
 
   const [form, setForm]       = useState({
@@ -69,11 +71,22 @@ export default function Signup() {
       <div className="auth-card auth-card--wide">
         <div className="auth-logo">
           <span className="auth-logo-icon">🚛</span>
-          <h1>Transport MS</h1>
-          <p>Transport Management System</p>
+          <h1>{t('common.appName')}</h1>
+          <p>{t('common.managementSystem')}</p>
         </div>
 
-        <h2>Register Your Company</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h2 style={{ marginBottom: 0 }}>{t('common.registerCompany')}</h2>
+          <select
+            className="form-input"
+            style={{ width: 120, height: 34, fontSize: '0.82rem' }}
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+          >
+            <option value="en">{t('common.english')}</option>
+            <option value="ta">{t('common.tamil')}</option>
+          </select>
+        </div>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -84,8 +97,8 @@ export default function Signup() {
               ? <img src={logoPreview} alt="Company logo preview" />
               : <div className="auth-logo-placeholder">
                   <span>📷</span>
-                  <span>Click to upload company logo</span>
-                  <span className="auth-logo-hint">PNG / JPG / SVG · max 2 MB</span>
+                  <span>{t('common.logoUploadHint')}</span>
+                  <span className="auth-logo-hint">{t('common.logoUploadSubHint')}</span>
                 </div>
             }
           </div>
@@ -102,12 +115,12 @@ export default function Signup() {
               className="auth-remove-logo"
               onClick={() => { setLogo(null); setPreview(null); fileRef.current.value = ''; }}
             >
-              Remove logo
+              {t('common.removeLogo')}
             </button>
           )}
 
           <div className="auth-field">
-            <label>Company Name <span className="req">*</span></label>
+            <label>{t('common.companyName')} <span className="req">*</span></label>
             <input
               type="text"
               value={form.companyName}
@@ -119,7 +132,7 @@ export default function Signup() {
 
           <div className="auth-row">
             <div className="auth-field">
-              <label>Your Full Name</label>
+              <label>{t('common.fullName')}</label>
               <input
                 type="text"
                 value={form.fullName}
@@ -128,7 +141,7 @@ export default function Signup() {
               />
             </div>
             <div className="auth-field">
-              <label>Username <span className="req">*</span></label>
+              <label>{t('common.username')} <span className="req">*</span></label>
               <input
                 type="text"
                 value={form.username}
@@ -141,7 +154,7 @@ export default function Signup() {
 
           <div className="auth-row">
             <div className="auth-field">
-              <label>Password <span className="req">*</span></label>
+              <label>{t('common.password')} <span className="req">*</span></label>
               <input
                 type="password"
                 value={form.password}
@@ -163,7 +176,7 @@ export default function Signup() {
           </div>
 
           <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? 'Setting up…' : 'Complete Setup'}
+            {loading ? t('common.settingUp') : t('common.completeSetup')}
           </button>
         </form>
       </div>

@@ -2,6 +2,7 @@
 import { Plus, Edit2, Trash2, X, Shield, User, Truck, UserCheck } from 'lucide-react';
 import { getUsers, createUser, updateUser, deleteUser, getDrivers, getCustomers } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const emptyForm = { username: '', fullName: '', password: '', confirmPassword: '', role: 'admin', driverId: '', customerId: '' };
 
@@ -15,6 +16,77 @@ const ROLE_ICONS = { admin: Shield, driver: Truck, customer: UserCheck };
 
 export default function Settings() {
   const { user: me } = useAuth();
+  const { language } = useLanguage();
+  const isTamil = language === 'ta';
+  const txt = isTamil ? {
+    title: 'அமைப்புகள்',
+    subtitle: 'பயனர் அணுகல் மற்றும் கணக்குகள்',
+    userAccounts: 'பயனர் கணக்குகள்',
+    userAccountsSub: 'உள்நுழைவு கணக்குகளை சேர்க்க, திருத்த, நீக்கு',
+    addUser: 'பயனர் சேர்க்க',
+    loadingUsers: 'பயனர்கள் ஏற்றப்படுகிறது...',
+    fullName: 'முழு பெயர்',
+    username: 'பயனர் பெயர்',
+    role: 'பங்கு',
+    linkedTo: 'இணைக்கப்பட்டது',
+    created: 'உருவாக்கம்',
+    actions: 'செயல்கள்',
+    you: 'நீங்கள்',
+    noUsers: 'பயனர்கள் இல்லை.',
+    editUser: 'பயனர் திருத்து',
+    addNewUser: 'புதிய பயனர் சேர்க்க',
+    loginUsername: 'உள்நுழைவு பெயர்',
+    displayName: 'காண்பிப்பு பெயர்',
+    linkedDriver: 'இணைக்கப்பட்ட ஓட்டுநர் பதிவு',
+    linkedCustomer: 'இணைக்கப்பட்ட வாடிக்கையாளர் பதிவு',
+    selectDriver: '-- ஓட்டுநரை தேர்வு செய்க --',
+    selectCustomer: '-- வாடிக்கையாளரை தேர்வு செய்க --',
+    newPassword: 'புதிய கடவுச்சொல்',
+    password: 'கடவுச்சொல்',
+    confirmPassword: 'கடவுச்சொல் உறுதி',
+    cancel: 'ரத்து',
+    update: 'புதுப்பி',
+    save: 'சேமி',
+    saving: 'சேமிக்கிறது...',
+    deleteConfirm: 'பயனர் "{name}" ஐ நீக்கவா? இந்த செயலை மாற்ற முடியாது.',
+    adminRole: 'நிர்வாகி - முழு அணுகல்',
+    driverRole: 'ஓட்டுநர் - படை, வாடகை, தனிப்பட்ட பதிவு',
+    customerRole: 'வாடிக்கையாளர் - வாடகை & தனிப்பட்ட சுயவிவரம்',
+  } : {
+    title: 'Settings',
+    subtitle: 'Manage system users and access',
+    userAccounts: 'User Accounts',
+    userAccountsSub: 'Add, edit or remove login accounts',
+    addUser: 'Add User',
+    loadingUsers: 'Loading users...',
+    fullName: 'Full Name',
+    username: 'Username',
+    role: 'Role',
+    linkedTo: 'Linked To',
+    created: 'Created',
+    actions: 'Actions',
+    you: 'You',
+    noUsers: 'No users found.',
+    editUser: 'Edit User',
+    addNewUser: 'Add New User',
+    loginUsername: 'Login username',
+    displayName: 'Display name',
+    linkedDriver: 'Linked Driver Record',
+    linkedCustomer: 'Linked Customer Record',
+    selectDriver: '-- Select driver --',
+    selectCustomer: '-- Select customer --',
+    newPassword: 'New Password',
+    password: 'Password',
+    confirmPassword: 'Confirm Password',
+    cancel: 'Cancel',
+    update: 'Update User',
+    save: 'Add User',
+    saving: 'Saving...',
+    deleteConfirm: 'Delete user "{name}"? This cannot be undone.',
+    adminRole: 'Admin - Full access',
+    driverRole: 'Driver - Fleet, Rentals, own records',
+    customerRole: 'Customer - Rentals & own profile',
+  };
   const [users,     setUsers]     = useState([]);
   const [drivers,   setDrivers]   = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -101,7 +173,7 @@ export default function Settings() {
 
   async function handleDelete(u) {
     const name = u.FullName || u.fullName || u.Username || u.username;
-    if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+    if (!confirm(txt.deleteConfirm.replace('{name}', name))) return;
     try {
       await deleteUser(u.Id || u.id);
       setUsers(prev => prev.filter(x => (x.Id || x.id) !== (u.Id || u.id)));
@@ -119,8 +191,8 @@ export default function Settings() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Settings</div>
-          <div className="page-subtitle">Manage system users and access</div>
+          <div className="page-title">{txt.title}</div>
+          <div className="page-subtitle">{txt.subtitle}</div>
         </div>
       </div>
 
@@ -128,28 +200,28 @@ export default function Settings() {
       <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-header" style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>User Accounts</div>
-            <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 2 }}>Add, edit or remove login accounts</div>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>{txt.userAccounts}</div>
+            <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 2 }}>{txt.userAccountsSub}</div>
           </div>
           <button className="btn btn-primary" onClick={openAdd}>
-            <Plus size={15} /> Add User
+            <Plus size={15} /> {txt.addUser}
           </button>
         </div>
 
         {loading ? (
-          <div style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Loading users...</div>
+          <div style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>{txt.loadingUsers}</div>
         ) : error ? (
           <div style={{ padding: '24px', color: '#dc2626' }}>{error}</div>
         ) : (
           <table className="data-table">
             <thead>
               <tr>
-                <th>Full Name</th>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Linked To</th>
-                <th>Created</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
+                <th>{txt.fullName}</th>
+                <th>{txt.username}</th>
+                <th>{txt.role}</th>
+                <th>{txt.linkedTo}</th>
+                <th>{txt.created}</th>
+                <th style={{ textAlign: 'right' }}>{txt.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -183,7 +255,7 @@ export default function Settings() {
                           {fname.charAt(0) || uname.charAt(0)}
                         </div>
                         <span style={{ fontWeight: 500 }}>{fname}</span>
-                        {isSelf && <span style={{ fontSize:'0.7rem', background:'#dcfce7', color:'#16a34a', padding:'1px 7px', borderRadius:99, fontWeight:600 }}>You</span>}
+                        {isSelf && <span style={{ fontSize:'0.7rem', background:'#dcfce7', color:'#16a34a', padding:'1px 7px', borderRadius:99, fontWeight:600 }}>{txt.you}</span>}
                       </div>
                     </td>
                     <td style={{ color:'#475569' }}>{uname}</td>
@@ -209,7 +281,7 @@ export default function Settings() {
                 );
               })}
               {users.length === 0 && (
-                <tr><td colSpan={6} style={{ textAlign:'center', color:'#94a3b8', padding:32 }}>No users found.</td></tr>
+                <tr><td colSpan={6} style={{ textAlign:'center', color:'#94a3b8', padding:32 }}>{txt.noUsers}</td></tr>
               )}
             </tbody>
           </table>
@@ -221,7 +293,7 @@ export default function Settings() {
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: 460 }}>
             <div className="modal-header">
-              <span className="modal-title">{editing ? 'Edit User' : 'Add New User'}</span>
+              <span className="modal-title">{editing ? txt.editUser : txt.addNewUser}</span>
               <button className="close-btn" onClick={() => setModal(false)}><X size={16}/></button>
             </div>
 
@@ -229,27 +301,27 @@ export default function Settings() {
 
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div className="form-group">
-                <label className="form-label">Username {!editing && <span style={{color:'#dc2626'}}>*</span>}</label>
-                <input className="form-input" placeholder="Login username" {...field('username')} disabled={!!editing} />
+                <label className="form-label">{txt.username} {!editing && <span style={{color:'#dc2626'}}>*</span>}</label>
+                <input className="form-input" placeholder={txt.loginUsername} {...field('username')} disabled={!!editing} />
               </div>
               <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input className="form-input" placeholder="Display name" {...field('fullName')} />
+                <label className="form-label">{txt.fullName}</label>
+                <input className="form-input" placeholder={txt.displayName} {...field('fullName')} />
               </div>
               <div className="form-group">
-                <label className="form-label">Role</label>
+                <label className="form-label">{txt.role}</label>
                 <select className="form-input" {...field('role')}>
-                  <option value="admin">Admin - Full access</option>
-                  <option value="driver">Driver - Fleet, Rentals, own records</option>
-                  <option value="customer">Customer - Rentals &amp; own profile</option>
+                  <option value="admin">{txt.adminRole}</option>
+                  <option value="driver">{txt.driverRole}</option>
+                  <option value="customer">{txt.customerRole}</option>
                 </select>
               </div>
 
               {form.role === 'driver' && (
                 <div className="form-group">
-                  <label className="form-label">Linked Driver Record <span style={{color:'#dc2626'}}>*</span></label>
+                  <label className="form-label">{txt.linkedDriver} <span style={{color:'#dc2626'}}>*</span></label>
                   <select className="form-input" value={form.driverId} onChange={e => setForm(f => ({ ...f, driverId: e.target.value }))}>
-                    <option value="">-- Select driver --</option>
+                    <option value="">{txt.selectDriver}</option>
                     {drivers.map(d => (
                       <option key={d.Id || d.id} value={d.Id || d.id}>{d.Name || d.name} ({d.Phone || d.phone || ''})</option>
                     ))}
@@ -259,9 +331,9 @@ export default function Settings() {
 
               {form.role === 'customer' && (
                 <div className="form-group">
-                  <label className="form-label">Linked Customer Record <span style={{color:'#dc2626'}}>*</span></label>
+                  <label className="form-label">{txt.linkedCustomer} <span style={{color:'#dc2626'}}>*</span></label>
                   <select className="form-input" value={form.customerId} onChange={e => setForm(f => ({ ...f, customerId: e.target.value }))}>
-                    <option value="">-- Select customer --</option>
+                    <option value="">{txt.selectCustomer}</option>
                     {customers.map(c => (
                       <option key={c.Id || c.id} value={c.Id || c.id}>{c.Name || c.name} ({c.Phone || c.phone || ''})</option>
                     ))}
@@ -270,19 +342,19 @@ export default function Settings() {
               )}
 
               <div className="form-group">
-                <label className="form-label">{editing ? 'New Password' : 'Password'} {!editing && <span style={{color:'#dc2626'}}>*</span>}</label>
+                <label className="form-label">{editing ? txt.newPassword : txt.password} {!editing && <span style={{color:'#dc2626'}}>*</span>}</label>
                 <input className="form-input" type="password" placeholder={editing ? 'Leave blank to keep current' : 'Min 6 characters'} {...field('password')} />
               </div>
               <div className="form-group">
-                <label className="form-label">Confirm Password</label>
+                <label className="form-label">{txt.confirmPassword}</label>
                 <input className="form-input" type="password" placeholder="Repeat password" {...field('confirmPassword')} />
               </div>
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setModal(false)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => setModal(false)}>{txt.cancel}</button>
               <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : editing ? 'Update User' : 'Add User'}
+                {saving ? txt.saving : editing ? txt.update : txt.save}
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
+import { useLanguage } from './LanguageContext';
 
 const AppContext = createContext();
 
@@ -46,6 +47,8 @@ const initialCustomers = [
 ];
 
 export function AppProvider({ children }) {
+  const { language } = useLanguage();
+  const isTamil = language === 'ta';
   const [vehicles,     setVehicles]     = useState([]);
   const [rentals,      setRentals]      = useState([]);
   const [expenses,     setExpenses]     = useState([]);
@@ -208,13 +211,15 @@ export function AppProvider({ children }) {
     }}>
       {loading ? (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontSize:'1.2rem', color:'#64748b' }}>
-          Connecting to database…
+          {isTamil ? 'தரவுத்தளத்துடன் இணைக்கப்படுகிறது…' : 'Connecting to database…'}
         </div>
       ) : error ? (
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100vh', color:'#ef4444' }}>
-          <h2>Could not connect to the API server</h2>
+          <h2>{isTamil ? 'API சேவையகத்துடன் இணைக்க முடியவில்லை' : 'Could not connect to the API server'}</h2>
           <p style={{ color:'#64748b' }}>{error}</p>
-          <p style={{ color:'#64748b', fontSize:'0.9rem' }}>Make sure the backend is running: <code>cd C:\Transport\server &amp;&amp; npm run dev</code></p>
+          <p style={{ color:'#64748b', fontSize:'0.9rem' }}>
+            {isTamil ? 'பின்புற சேவை இயங்குகிறதா என்பதை உறுதிப்படுத்தவும்:' : 'Make sure the backend is running:'} <code>cd C:\Transport\server &amp;&amp; npm run dev</code>
+          </p>
         </div>
       ) : children}
     </AppContext.Provider>

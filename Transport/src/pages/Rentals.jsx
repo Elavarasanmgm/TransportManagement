@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Plus, Search, Edit2, Trash2, X, Eye } from 'lucide-react';
 
 const emptyForm = {
@@ -12,6 +13,109 @@ const emptyForm = {
 export default function Rentals() {
   const { rentals, vehicles, customers, addRental, updateRental, deleteRental, addCustomer } = useApp();
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const isTamil = language === 'ta';
+  const txt = isTamil ? {
+    rentalBookings: 'வாடகை பதிவுகள்',
+    totalBookings: 'மொத்த பதிவுகள்',
+    newBooking: 'புதிய பதிவு',
+    totalRevenue: 'மொத்த வருவாய்',
+    pendingBalance: 'நிலுவைத் தொகை',
+    activeRentals: 'செயலில் உள்ள வாடகைகள்',
+    completed: 'முடிந்தவை',
+    searchPlaceholder: 'வாடிக்கையாளர், வாகனம் தேடு...',
+    allStatus: 'அனைத்து நிலைகள்',
+    statusActive: 'செயலில்',
+    statusCompleted: 'முடிந்தது',
+    statusCancelled: 'ரத்து',
+    noRentals: 'வாடகை பதிவுகள் இல்லை.',
+    bookingModalTitleNew: 'புதிய வாடகை பதிவு',
+    bookingModalTitleEdit: 'வாடகை பதிவை திருத்து',
+    customerName: 'வாடிக்கையாளர் பெயர்',
+    phone: 'தொலைபேசி',
+    vehicle: 'வாகனம்',
+    selectVehicle: 'வாகனத்தை தேர்வு செய்க',
+    purpose: 'பயன்பாட்டு காரணம்',
+    purposePlaceholder: 'வாடகை நோக்கம்',
+    startDate: 'தொடக்க தேதி',
+    endDate: 'முடிவு தேதி',
+    rateType: 'கட்டண வகை',
+    daily: 'தினசரி',
+    hourly: 'மணிநேர',
+    dailyRate: 'தினசரி கட்டணம் (ரூ)',
+    hourlyRate: 'மணிநேர கட்டணம் (ரூ)',
+    days: 'நாட்கள்',
+    hours: 'மணிநேரங்கள்',
+    grossAmount: 'மொத்த தொகை (ரூ)',
+    discount: 'தள்ளுபடி (ரூ)',
+    advancePaid: 'முன்பணம் (ரூ)',
+    balance: 'நிலுவை (ரூ)',
+    status: 'நிலை',
+    cancel: 'ரத்து',
+    saveBooking: 'பதிவு சேமி',
+    update: 'புதுப்பி',
+    close: 'மூடு',
+    edit: 'திருத்து',
+    addCustomer: 'வாடிக்கையாளர் சேர்க்க',
+    addNewCustomer: 'புதிய வாடிக்கையாளர் சேர்க்க',
+    companyCustomerName: 'நிறுவனம் / வாடிக்கையாளர் பெயர்',
+    contactPerson: 'தொடர்பு நபர்',
+    email: 'மின்னஞ்சல்',
+    address: 'முகவரி',
+    active: 'செயலில்',
+    inactive: 'செயலற்றது',
+    viewDetails: 'வாடகை விவரங்கள்',
+  } : {
+    rentalBookings: 'Rental Bookings',
+    totalBookings: 'total bookings',
+    newBooking: 'New Booking',
+    totalRevenue: 'Total Revenue',
+    pendingBalance: 'Pending Balance',
+    activeRentals: 'Active Rentals',
+    completed: 'Completed',
+    searchPlaceholder: 'Search customer, vehicle...',
+    allStatus: 'All Status',
+    statusActive: 'Active',
+    statusCompleted: 'Completed',
+    statusCancelled: 'Cancelled',
+    noRentals: 'No rentals found.',
+    bookingModalTitleNew: 'New Rental Booking',
+    bookingModalTitleEdit: 'Edit Booking',
+    customerName: 'Customer Name',
+    phone: 'Phone',
+    vehicle: 'Vehicle',
+    selectVehicle: 'Select vehicle',
+    purpose: 'Purpose',
+    purposePlaceholder: 'Purpose of rental',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    rateType: 'Rate Type',
+    daily: 'Daily',
+    hourly: 'Hourly',
+    dailyRate: 'Daily Rate (₹)',
+    hourlyRate: 'Hourly Rate (₹)',
+    days: 'Days',
+    hours: 'Hours',
+    grossAmount: 'Gross Amount (₹)',
+    discount: 'Discount (₹)',
+    advancePaid: 'Advance Paid (₹)',
+    balance: 'Balance (₹)',
+    status: 'Status',
+    cancel: 'Cancel',
+    saveBooking: 'Save Booking',
+    update: 'Update',
+    close: 'Close',
+    edit: 'Edit',
+    addCustomer: 'Add Customer',
+    addNewCustomer: 'Add New Customer',
+    companyCustomerName: 'Company / Customer Name',
+    contactPerson: 'Contact Person',
+    email: 'Email',
+    address: 'Address',
+    active: 'Active',
+    inactive: 'Inactive',
+    viewDetails: 'Rental Details',
+  };
   const isReadOnly = user?.role === 'driver' || user?.role === 'customer';
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState('all');
@@ -114,18 +218,18 @@ export default function Rentals() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Rental Bookings</div>
-          <div className="page-subtitle">{rentals.length} total bookings</div>
+          <div className="page-title">{txt.rentalBookings}</div>
+          <div className="page-subtitle">{rentals.length} {txt.totalBookings}</div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} style={{ display: user?.role === 'customer' ? 'none' : undefined }}><Plus size={16} /> New Booking</button>
+        <button className="btn btn-primary" onClick={openAdd} style={{ display: user?.role === 'customer' ? 'none' : undefined }}><Plus size={16} /> {txt.newBooking}</button>
       </div>
 
       <div className="grid-4" style={{ marginBottom: 20 }}>
         {[
-          { label:'Total Revenue', value: fmt(totalRevenue), bg:'#dbeafe', color:'#1e40af', hide: isReadOnly },
-          { label:'Pending Balance', value: fmt(totalBalance), bg:'#fee2e2', color:'#dc2626', hide: isReadOnly },
-          { label:'Active Rentals', value: activeCount, bg:'#d1fae5', color:'#059669', hide: false },
-          { label:'Completed', value: completedCount, bg:'#fef3c7', color:'#d97706', hide: false },
+          { label:txt.totalRevenue, value: fmt(totalRevenue), bg:'#dbeafe', color:'#1e40af', hide: isReadOnly },
+          { label:txt.pendingBalance, value: fmt(totalBalance), bg:'#fee2e2', color:'#dc2626', hide: isReadOnly },
+          { label:txt.activeRentals, value: activeCount, bg:'#d1fae5', color:'#059669', hide: false },
+          { label:txt.completed, value: completedCount, bg:'#fef3c7', color:'#d97706', hide: false },
         ].filter(s => !s.hide).map((s,i) => (
           <div key={i} className="stat-card">
             <div className="stat-icon" style={{ background: s.bg }}>
@@ -142,13 +246,13 @@ export default function Rentals() {
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={15} className="search-icon" />
-          <input className="search-input" placeholder="Search customer, vehicle..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="search-input" placeholder={txt.searchPlaceholder} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="form-input" style={{ width: 160 }} value={filter} onChange={e => setFilter(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="all">{txt.allStatus}</option>
+          <option value="active">{txt.statusActive}</option>
+          <option value="completed">{txt.statusCompleted}</option>
+          <option value="cancelled">{txt.statusCancelled}</option>
         </select>
       </div>
 
@@ -202,7 +306,7 @@ export default function Rentals() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={9} className="empty-state">No rentals found.</td></tr>
+              <tr><td colSpan={9} className="empty-state">{txt.noRentals}</td></tr>
             )}
           </tbody>
         </table>
@@ -213,15 +317,15 @@ export default function Rentals() {
         <div className="modal-overlay">
           <div className="modal modal-lg">
             <div className="modal-header">
-              <span className="modal-title">{editing ? 'Edit Booking' : 'New Rental Booking'}</span>
+              <span className="modal-title">{editing ? txt.bookingModalTitleEdit : txt.bookingModalTitleNew}</span>
               <button className="close-btn" onClick={() => setModal(false)}><X size={16}/></button>
             </div>
             <div className="grid-2">
               <div className="form-group" style={{ position:'relative' }}>
-                <label className="form-label">Customer Name *</label>
+                <label className="form-label">{txt.customerName} *</label>
                 <input
                   className="form-input"
-                  placeholder="Type or select customer..."
+                  placeholder={isTamil ? 'தட்டச்சு செய்யவும் அல்லது தேர்வு செய்யவும்...' : 'Type or select customer...'}
                   value={custSearch}
                   autoComplete="off"
                   onFocus={() => setCustOpen(true)}
@@ -243,35 +347,35 @@ export default function Rentals() {
                       style={{ padding:'8px 12px', cursor:'pointer', color:'#2563eb', fontWeight:600, borderTop:'1px solid #e2e8f0', fontSize:'0.9rem' }}
                       onMouseEnter={e => e.currentTarget.style.background='#eff6ff'}
                       onMouseLeave={e => e.currentTarget.style.background='#fff'}
-                    >+ Add New Customer</div>
+                    >+ {txt.addNewCustomer}</div>
                   </div>
                 )}
               </div>
               <div className="form-group">
-                <label className="form-label">Phone</label>
+                <label className="form-label">{txt.phone}</label>
                 <input className="form-input" placeholder="9876543210" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Vehicle *</label>
+                <label className="form-label">{txt.vehicle} *</label>
                 <select className="form-input" value={form.vehicleId} onChange={e => handleVehicleChange(e.target.value)}>
-                  <option value="">Select vehicle</option>
+                  <option value="">{txt.selectVehicle}</option>
                   {vehicles.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Purpose</label>
-                <input className="form-input" placeholder="Purpose of rental" value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} />
+                <label className="form-label">{txt.purpose}</label>
+                <input className="form-input" placeholder={txt.purposePlaceholder} value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Start Date *</label>
+                <label className="form-label">{txt.startDate} *</label>
                 <input className="form-input" type="date" value={form.startDate} onChange={e => handleDateChange('startDate', e.target.value)} />
               </div>
               <div className="form-group">
-                <label className="form-label">End Date *</label>
+                <label className="form-label">{txt.endDate} *</label>
                 <input className="form-input" type="date" value={form.endDate} onChange={e => handleDateChange('endDate', e.target.value)} />
               </div>
               <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                <label className="form-label">Rate Type</label>
+                <label className="form-label">{txt.rateType}</label>
                 <div style={{ display:'flex', gap:8 }}>
                   {['daily','hourly'].map(t => (
                     <button key={t} type="button" onClick={() => handleRateTypeChange(t)}
@@ -279,58 +383,58 @@ export default function Rentals() {
                         borderColor: form.rateType===t ? '#2563eb':'#cbd5e1',
                         background: form.rateType===t ? '#2563eb':'#fff',
                         color: form.rateType===t ? '#fff':'#64748b', fontWeight:600, fontSize:'0.85rem' }}>
-                      {t === 'daily' ? '📅 Daily' : '⏱ Hourly'}
+                      {t === 'daily' ? `📅 ${txt.daily}` : `⏱ ${txt.hourly}`}
                     </button>
                   ))}
                 </div>
               </div>
               {form.rateType === 'daily' ? (<>
                 <div className="form-group">
-                  <label className="form-label">Daily Rate (₹)</label>
+                  <label className="form-label">{txt.dailyRate}</label>
                   <input className="form-input" type="number" value={form.dailyRate} onChange={e => handleDailyRateChange(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Days</label>
+                  <label className="form-label">{txt.days}</label>
                   <input className="form-input" type="number" value={form.days} readOnly style={{ background:'#f8fafc' }} />
                 </div>
               </>) : (<>
                 <div className="form-group">
-                  <label className="form-label">Hourly Rate (₹)</label>
+                  <label className="form-label">{txt.hourlyRate}</label>
                   <input className="form-input" type="number" value={form.hourlyRate} onChange={e => handleHourlyRateChange(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Hours</label>
+                  <label className="form-label">{txt.hours}</label>
                   <input className="form-input" type="number" placeholder="e.g. 4" value={form.hours} onChange={e => handleHoursChange(e.target.value)} />
                 </div>
               </>)}
               <div className="form-group">
-                <label className="form-label">Gross Amount (₹)</label>
+                <label className="form-label">{txt.grossAmount}</label>
                 <input className="form-input" type="number" value={form.totalAmount} readOnly style={{ background:'#f8fafc', fontWeight:700 }} />
               </div>
               <div className="form-group">
-                <label className="form-label">Discount (₹)</label>
+                <label className="form-label">{txt.discount}</label>
                 <input className="form-input" type="number" placeholder="0" value={form.discount} onChange={e => handleDiscountChange(e.target.value)} />
               </div>
               <div className="form-group">
-                <label className="form-label">Advance Paid (₹)</label>
+                <label className="form-label">{txt.advancePaid}</label>
                 <input className="form-input" type="number" value={form.advancePaid} onChange={e => handleAdvanceChange(e.target.value)} />
               </div>
               <div className="form-group">
-                <label className="form-label">Balance (₹)</label>
+                <label className="form-label">{txt.balance}</label>
                 <input className="form-input" type="number" value={form.balance} readOnly style={{ background:'#f8fafc', color:'#dc2626', fontWeight:700 }} />
               </div>
               <div className="form-group">
-                <label className="form-label">Status</label>
+                <label className="form-label">{txt.status}</label>
                 <select className="form-input" value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="active">{txt.statusActive}</option>
+                  <option value="completed">{txt.statusCompleted}</option>
+                  <option value="cancelled">{txt.statusCancelled}</option>
                 </select>
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave}>{editing ? 'Update' : 'Save Booking'}</button>
+              <button className="btn btn-secondary" onClick={() => setModal(false)}>{txt.cancel}</button>
+              <button className="btn btn-primary" onClick={handleSave}>{editing ? txt.update : txt.saveBooking}</button>
             </div>
           </div>
         </div>
@@ -341,7 +445,7 @@ export default function Rentals() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <span className="modal-title">Rental Details</span>
+              <span className="modal-title">{txt.viewDetails}</span>
               <button className="close-btn" onClick={() => setView(null)}><X size={16}/></button>
             </div>
             <div style={{ background:'#f8fafc', borderRadius:10, padding:'14px 16px', marginBottom:16 }}>
@@ -368,8 +472,8 @@ export default function Rentals() {
               </div>
             ))}
             <div className="modal-footer" style={{ borderTop:'none', marginTop:8 }}>
-              <button className="btn btn-secondary" onClick={() => setView(null)}>Close</button>
-              {user?.role !== 'customer' && <button className="btn btn-primary" onClick={() => { setView(null); openEdit(viewModal); }}>Edit</button>}
+              <button className="btn btn-secondary" onClick={() => setView(null)}>{txt.close}</button>
+              {user?.role !== 'customer' && <button className="btn btn-primary" onClick={() => { setView(null); openEdit(viewModal); }}>{txt.edit}</button>}
             </div>
           </div>
         </div>
@@ -380,41 +484,41 @@ export default function Rentals() {
         <div className="modal-overlay" style={{ zIndex:1100 }}>
           <div className="modal">
             <div className="modal-header">
-              <span className="modal-title">Add Customer</span>
+              <span className="modal-title">{txt.addCustomer}</span>
               <button className="close-btn" onClick={() => setAddCustModal(false)}><X size={16}/></button>
             </div>
             <div className="grid-2">
               <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                <label className="form-label">Company / Customer Name *</label>
+                <label className="form-label">{txt.companyCustomerName} *</label>
                 <input className="form-input" placeholder="Name" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Contact Person</label>
+                <label className="form-label">{txt.contactPerson}</label>
                 <input className="form-input" placeholder="Contact person" value={custForm.contact} onChange={e => setCustForm({...custForm, contact: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Phone *</label>
+                <label className="form-label">{txt.phone} *</label>
                 <input className="form-input" placeholder="9876543210" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Email</label>
+                <label className="form-label">{txt.email}</label>
                 <input className="form-input" type="email" placeholder="email@example.com" value={custForm.email} onChange={e => setCustForm({...custForm, email: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Status</label>
+                <label className="form-label">{txt.status}</label>
                 <select className="form-input" value={custForm.status} onChange={e => setCustForm({...custForm, status: e.target.value})}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">{txt.active}</option>
+                  <option value="inactive">{txt.inactive}</option>
                 </select>
               </div>
               <div className="form-group" style={{ gridColumn:'1/-1' }}>
-                <label className="form-label">Address</label>
+                <label className="form-label">{txt.address}</label>
                 <input className="form-input" placeholder="City, State" value={custForm.address} onChange={e => setCustForm({...custForm, address: e.target.value})} />
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setAddCustModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveNewCustomer}>Add Customer</button>
+              <button className="btn btn-secondary" onClick={() => setAddCustModal(false)}>{txt.cancel}</button>
+              <button className="btn btn-primary" onClick={handleSaveNewCustomer}>{txt.addCustomer}</button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
@@ -9,6 +10,51 @@ const COLORS = ['#3b82f6','#f59e0b','#10b981','#8b5cf6'];
 
 export default function ProfitLoss() {
   const { vehicles, rentals, expenses } = useApp();
+  const { language } = useLanguage();
+  const isTamil = language === 'ta';
+  const txt = isTamil ? {
+    title: 'லாபம் & நட்டம்',
+    subtitle: 'உங்கள் படையின் நிதி பார்வை',
+    totalRevenue: 'மொத்த வருவாய்',
+    totalExpenses: 'மொத்த செலவுகள்',
+    netProfit: 'நிகர லாபம்',
+    profitMargin: 'லாப விகிதம்',
+    monthlyTrend: 'மாத லாப போக்கு',
+    revenueShare: 'வாகன வாரி வருவாய் பங்கு',
+    noData: 'வாடகை தரவு இல்லை.',
+    tableTitle: 'வாகன வாரி லாபம் & நட்டம்',
+    vehicle: 'வாகனம்',
+    type: 'வகை',
+    revenue: 'வருவாய்',
+    expenses: 'செலவுகள்',
+    grossProfit: 'மொத்த லாபம்',
+    margin: 'விகிதம்',
+    status: 'நிலை',
+    total: 'மொத்தம்',
+    profit: 'லாபம்',
+    loss: 'நட்டம்',
+  } : {
+    title: 'Profit & Loss',
+    subtitle: 'Financial overview of your fleet',
+    totalRevenue: 'Total Revenue',
+    totalExpenses: 'Total Expenses',
+    netProfit: 'Net Profit',
+    profitMargin: 'Profit Margin',
+    monthlyTrend: 'Monthly Profit Trend',
+    revenueShare: 'Revenue Share by Vehicle',
+    noData: 'No rental data available.',
+    tableTitle: 'Vehicle-wise Profit & Loss',
+    vehicle: 'Vehicle',
+    type: 'Type',
+    revenue: 'Revenue',
+    expenses: 'Expenses',
+    grossProfit: 'Gross Profit',
+    margin: 'Margin',
+    status: 'Status',
+    total: 'Total',
+    profit: 'Profit',
+    loss: 'Loss',
+  };
   const [view, setView] = useState('overall'); // overall | by-vehicle
 
   const fmt = (n) => '₹' + Number(n).toLocaleString('en-IN');
@@ -52,18 +98,18 @@ export default function ProfitLoss() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Profit & Loss</div>
-          <div className="page-subtitle">Financial overview of your fleet</div>
+          <div className="page-title">{txt.title}</div>
+          <div className="page-subtitle">{txt.subtitle}</div>
         </div>
       </div>
 
       {/* Summary cards */}
       <div className="grid-4" style={{ marginBottom: 24 }}>
         {[
-          { label:'Total Revenue', value: fmt(totalRevenue), bg:'#dbeafe', color:'#1e40af', icon:'💰' },
-          { label:'Total Expenses', value: fmt(totalExpenses), bg:'#fee2e2', color:'#dc2626', icon:'📉' },
-          { label:'Net Profit', value: fmt(grossProfit), bg: grossProfit>=0?'#d1fae5':'#fee2e2', color: grossProfit>=0?'#059669':'#dc2626', icon: grossProfit>=0?'📈':'📉' },
-          { label:'Profit Margin', value: `${profitMargin}%`, bg:'#fef3c7', color:'#d97706', icon:'🎯' },
+          { label:txt.totalRevenue, value: fmt(totalRevenue), bg:'#dbeafe', color:'#1e40af', icon:'💰' },
+          { label:txt.totalExpenses, value: fmt(totalExpenses), bg:'#fee2e2', color:'#dc2626', icon:'📉' },
+          { label:txt.netProfit, value: fmt(grossProfit), bg: grossProfit>=0?'#d1fae5':'#fee2e2', color: grossProfit>=0?'#059669':'#dc2626', icon: grossProfit>=0?'📈':'📉' },
+          { label:txt.profitMargin, value: `${profitMargin}%`, bg:'#fef3c7', color:'#d97706', icon:'🎯' },
         ].map((s,i) => (
           <div key={i} className="stat-card">
             <div className="stat-icon" style={{ background: s.bg }}><span style={{ fontSize:'1.4rem' }}>{s.icon}</span></div>
@@ -79,7 +125,7 @@ export default function ProfitLoss() {
       <div className="grid-2" style={{ marginBottom: 24 }}>
         <div className="card">
           <div className="section-header">
-            <span className="section-title">Monthly Profit Trend</span>
+            <span className="section-title">{txt.monthlyTrend}</span>
           </div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={monthlyPL}>
@@ -96,7 +142,7 @@ export default function ProfitLoss() {
 
         <div className="card">
           <div className="section-header">
-            <span className="section-title">Revenue Share by Vehicle</span>
+            <span className="section-title">{txt.revenueShare}</span>
           </div>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
@@ -109,7 +155,7 @@ export default function ProfitLoss() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="empty-state">No rental data available.</div>
+            <div className="empty-state">{txt.noData}</div>
           )}
         </div>
       </div>
@@ -117,19 +163,19 @@ export default function ProfitLoss() {
       {/* Per Vehicle P&L table */}
       <div className="card">
         <div className="section-header">
-          <span className="section-title">Vehicle-wise Profit & Loss</span>
+          <span className="section-title">{txt.tableTitle}</span>
         </div>
         <div className="table-container" style={{ border:'none' }}>
           <table>
             <thead>
               <tr>
-                <th>Vehicle</th>
-                <th>Type</th>
-                <th>Revenue</th>
-                <th>Expenses</th>
-                <th>Gross Profit</th>
-                <th>Margin</th>
-                <th>Status</th>
+                <th>{txt.vehicle}</th>
+                <th>{txt.type}</th>
+                <th>{txt.revenue}</th>
+                <th>{txt.expenses}</th>
+                <th>{txt.grossProfit}</th>
+                <th>{txt.margin}</th>
+                <th>{txt.status}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,7 +204,7 @@ export default function ProfitLoss() {
                   </td>
                   <td>
                     <span className={`badge ${v.profit>=0?'badge-success':'badge-danger'}`}>
-                      {v.profit>=0 ? 'Profit' : 'Loss'}
+                      {v.profit>=0 ? txt.profit : txt.loss}
                     </span>
                   </td>
                 </tr>
@@ -166,7 +212,7 @@ export default function ProfitLoss() {
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={2} style={{ padding:'12px 16px', fontWeight:700, background:'#f8fafc' }}>Total</td>
+                <td colSpan={2} style={{ padding:'12px 16px', fontWeight:700, background:'#f8fafc' }}>{txt.total}</td>
                 <td style={{ padding:'12px 16px', fontWeight:700, color:'#1e40af', background:'#f8fafc' }}>{fmt(totalRevenue)}</td>
                 <td style={{ padding:'12px 16px', fontWeight:700, color:'#dc2626', background:'#f8fafc' }}>{fmt(totalExpenses)}</td>
                 <td style={{ padding:'12px 16px', fontWeight:700, color: grossProfit>=0?'#059669':'#dc2626', background:'#f8fafc' }}>{fmt(grossProfit)}</td>
