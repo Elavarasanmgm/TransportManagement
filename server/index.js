@@ -9,11 +9,16 @@ const migrationState = {
 };
 
 const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',')
-  : null;
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5000'];
 
 app.use(cors({
-  origin: allowedOrigins || true,
+  origin: (origin, callback) => {
+    // allow server-to-server / same-origin requests (no Origin header)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' })); // raised for base64 logo uploads
@@ -29,6 +34,7 @@ app.use('/api/drivers',       require('./routes/drivers'));
 app.use('/api/attendance',    require('./routes/attendance'));
 app.use('/api/customers',     require('./routes/customers'));
 app.use('/api/dashboard',     require('./routes/dashboard'));
+app.use('/api/payments',      require('./routes/payments'));
 
 // Health check
 app.get('/api/health', (req, res) => {

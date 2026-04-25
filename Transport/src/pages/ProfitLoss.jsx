@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -85,14 +85,29 @@ export default function ProfitLoss() {
     color: COLORS[i % COLORS.length],
   }));
 
-  const monthlyPL = [
-    { month:'Oct', revenue:42000, expenses:18000, profit:24000 },
-    { month:'Nov', revenue:55000, expenses:22000, profit:33000 },
-    { month:'Dec', revenue:48000, expenses:25000, profit:23000 },
-    { month:'Jan', revenue:61000, expenses:19000, profit:42000 },
-    { month:'Feb', revenue:58000, expenses:21000, profit:37000 },
-    { month:'Mar', revenue:46500, expenses:19000, profit:27500 },
-  ];
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthlyPL = useMemo(() => {
+    const map = {};
+    rentals.forEach(r => {
+      const d = r.startDate ? new Date(r.startDate) : null;
+      if (!d || isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!map[key]) map[key] = { month: MONTHS_SHORT[d.getMonth()], revenue: 0, expenses: 0, profit: 0, _key: key };
+      map[key].revenue += Number(r.totalAmount) || 0;
+    });
+    expenses.forEach(e => {
+      const raw = e.expenseDate || e.date;
+      const d   = raw ? new Date(raw) : null;
+      if (!d || isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!map[key]) map[key] = { month: MONTHS_SHORT[d.getMonth()], revenue: 0, expenses: 0, profit: 0, _key: key };
+      map[key].expenses += Number(e.amount) || 0;
+    });
+    return Object.values(map)
+      .sort((a, b) => a._key.localeCompare(b._key))
+      .slice(-6)
+      .map(({ month, revenue, expenses, profit: _ }) => ({ month, revenue, expenses, profit: revenue - expenses }));
+  }, [rentals, expenses]);
 
   return (
     <div>

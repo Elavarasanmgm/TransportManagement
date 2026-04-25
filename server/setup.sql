@@ -18,17 +18,22 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Vehicles')
 BEGIN
     CREATE TABLE Vehicles (
-        Id          INT IDENTITY(1,1) PRIMARY KEY,
-        Name        NVARCHAR(100)  NOT NULL,
-        Type        NVARCHAR(50)   NOT NULL,   -- Lorry, JCB, Tractor, Car
-        RegNo       NVARCHAR(50)   NOT NULL UNIQUE,
-        Model       NVARCHAR(100),
-        Year        INT,
-        Status      NVARCHAR(20)   DEFAULT 'available',  -- available, on-rent, maintenance
-        Driver      NVARCHAR(100),
-        DailyRate   DECIMAL(10,2)  DEFAULT 0,
-        Emoji       NVARCHAR(10)   DEFAULT '🚛',
-        CreatedAt   DATETIME       DEFAULT GETDATE()
+        Id              INT IDENTITY(1,1) PRIMARY KEY,
+        Name            NVARCHAR(100)  NOT NULL,
+        Type            NVARCHAR(50)   NOT NULL,   -- Lorry, JCB, Tractor, Car
+        RegNo           NVARCHAR(50)   NOT NULL,
+        Model           NVARCHAR(100),
+        Year            INT,
+        Status          NVARCHAR(20)   DEFAULT 'available',  -- available, on-rent, maintenance
+        Driver          NVARCHAR(100),
+        DailyRate       DECIMAL(10,2)  DEFAULT 0,
+        HourlyRate      DECIMAL(10,2)  DEFAULT 0,
+        Emoji           NVARCHAR(10)   DEFAULT '🚛',
+        InsuranceExpiry DATE           NULL,
+        RCExpiry        DATE           NULL,
+        FitnessExpiry   DATE           NULL,
+        PermitExpiry    DATE           NULL,
+        CreatedAt       DATETIME       DEFAULT GETDATE()
     );
     PRINT 'Vehicles table created.';
 END
@@ -66,11 +71,16 @@ BEGIN
         EndDate      DATE           NOT NULL,
         Days         INT            DEFAULT 1,
         DailyRate    DECIMAL(10,2)  DEFAULT 0,
+        HourlyRate   DECIMAL(10,2)  DEFAULT 0,
+        Hours        INT            DEFAULT 0,
+        RateType     NVARCHAR(10)   DEFAULT 'daily',
         TotalAmount  DECIMAL(12,2)  DEFAULT 0,
+        Discount     DECIMAL(12,2)  DEFAULT 0,
         AdvancePaid  DECIMAL(12,2)  DEFAULT 0,
         Balance      DECIMAL(12,2)  DEFAULT 0,
         Purpose      NVARCHAR(250),
         Status       NVARCHAR(20)   DEFAULT 'active',  -- active, completed, cancelled
+        ContractNo   NVARCHAR(30)   NULL,
         CreatedAt    DATETIME       DEFAULT GETDATE()
     );
     PRINT 'Rentals table created.';

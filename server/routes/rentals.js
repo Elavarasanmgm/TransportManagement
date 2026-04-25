@@ -16,6 +16,23 @@ async function syncCustomerStats(pool, customerName, companyId) {
             WHERE Name = @customer AND CompanyId = @cid`);
 } 
 
+// Auto-sync vehicle availability status based on active rental count
+async function syncVehicleStatus(pool, vehicleId, companyId) {
+  if (!vehicleId) return;
+  const chk = await pool.request()
+    .input('vid', sql.Int, vehicleId)
+    .input('cid', sql.Int, companyId)
+    .query(`SELECT COUNT(*) AS cnt FROM Rentals
+            WHERE VehicleId=@vid AND CompanyId=@cid AND Status='active'`);
+  const newStatus = chk.recordset[0].cnt > 0 ? 'on-rent' : 'available';
+  await pool.request()
+    .input('vid', sql.Int, vehicleId)
+    .input('cid', sql.Int, companyId)
+    .input('st',  sql.NVarChar, newStatus)
+    .query(`UPDATE Vehicles SET Status=@st
+            WHERE Id=@vid AND CompanyId=@cid AND Status <> 'maintenance'`);
+}
+
 // GET all rentals (customer role sees only their own rentals)
 router.get('/', async (req, res) => {
   const cid = req.user.companyId;
@@ -44,7 +61,29 @@ router.post('/', async (req, res) => {
   const { vehicleId, vehicleName, customer, phone, startDate, endDate, days, dailyRate, hourlyRate, hours, rateType, totalAmount, discount, advancePaid, balance, purpose, status } = req.body;
   const cid = req.user.companyId;
   try {
-    const pool   = await getPool();
+    const pool = await getPool();
+
+    // ── Double-booking check ─────────────────────────────────────────────────
+    if (vehicleId && (status || 'active') === 'active') {
+      const overlap = await pool.request()
+        .input('vid',   sql.Int,  vehicleId)
+        .input('start', sql.Date, startDate)
+        .input('end',   sql.Date, endDate)
+        .input('cid',   sql.Int,  cid)
+        .query(`SELECT Id FROM Rentals
+                WHERE VehicleId=@vid AND CompanyId=@cid AND Status='active'
+                  AND StartDate <= @end AND EndDate >= @start`);
+      if (overlap.recordset.length > 0) {
+        return res.status(409).json({ error: 'Vehicle is already booked for the selected dates.' });
+      }
+    }
+
+    // ── Generate ContractNo: RNT-<year>-<seq> ───────────────────────────────
+    const seqRes = await pool.request()
+      .input('cid', sql.Int, cid)
+      .query('SELECT COUNT(*)+1 AS next FROM Rentals WHERE CompanyId=@cid');
+    const contractNo = `RNT-${new Date().getFullYear()}-${String(seqRes.recordset[0].next).padStart(4, '0')}`;
+
     const result = await pool.request()
       .input('vehicleId',   sql.Int,      vehicleId || null)
       .input('vehicleName', sql.NVarChar, vehicleName || '')
@@ -63,19 +102,21 @@ router.post('/', async (req, res) => {
       .input('balance',     sql.Decimal,  balance || 0)
       .input('purpose',     sql.NVarChar, purpose || '')
       .input('status',      sql.NVarChar, status || 'active')
+      .input('contractNo',  sql.NVarChar, contractNo)
       .input('cid',         sql.Int,      cid)
       .query(`INSERT INTO Rentals
                 (VehicleId, VehicleName, Customer, Phone, StartDate, EndDate, Days,
                  DailyRate, HourlyRate, Hours, RateType, TotalAmount, Discount,
-                 AdvancePaid, Balance, Purpose, Status, CompanyId)
+                 AdvancePaid, Balance, Purpose, Status, ContractNo, CompanyId)
                 OUTPUT INSERTED.*
               VALUES
                 (@vehicleId, @vehicleName, @customer, @phone, @startDate, @endDate, @days,
                  @dailyRate, @hourlyRate, @hours, @rateType, @totalAmount, @discount,
-                 @advancePaid, @balance, @purpose, @status, @cid)`);
+                 @advancePaid, @balance, @purpose, @status, @contractNo, @cid)`);
     res.status(201).json(result.recordset[0]);
-    // sync customer totals (fire-and-forget, errors are non-critical)
+    // fire-and-forget async sync
     syncCustomerStats(pool, customer, cid).catch(() => {});
+    syncVehicleStatus(pool, vehicleId, cid).catch(() => {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -127,6 +168,7 @@ router.put('/:id', async (req, res) => {
     // sync new customer totals; if name changed also sync old customer
     syncCustomerStats(pool, customer, cid).catch(() => {});
     if (oldCustomer && oldCustomer !== customer) syncCustomerStats(pool, oldCustomer, cid).catch(() => {});
+    syncVehicleStatus(pool, vehicleId, cid).catch(() => {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -138,19 +180,21 @@ router.delete('/:id', async (req, res) => {
   const cid = req.user.companyId;
   try {
     const pool = await getPool();
-    // fetch customer name before deleting so we can sync after
+    // fetch customer name and vehicleId before deleting so we can sync after
     const oldRec = await pool.request()
       .input('id',  sql.Int, req.params.id)
       .input('cid', sql.Int, cid)
-      .query('SELECT Customer FROM Rentals WHERE Id = @id AND CompanyId = @cid');
-    const oldCustomer = oldRec.recordset[0]?.Customer;
+      .query('SELECT Customer, VehicleId FROM Rentals WHERE Id = @id AND CompanyId = @cid');
+    const oldCustomer  = oldRec.recordset[0]?.Customer;
+    const oldVehicleId = oldRec.recordset[0]?.VehicleId;
     const result = await pool.request()
       .input('id',  sql.Int, req.params.id)
       .input('cid', sql.Int, cid)
       .query('DELETE FROM Rentals OUTPUT DELETED.Id WHERE Id = @id AND CompanyId = @cid');
     if (!result.recordset.length) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Deleted successfully' });
-    if (oldCustomer) syncCustomerStats(pool, oldCustomer, cid).catch(() => {});
+    if (oldCustomer)  syncCustomerStats(pool, oldCustomer, cid).catch(() => {});
+    if (oldVehicleId) syncVehicleStatus(pool, oldVehicleId, cid).catch(() => {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -155,7 +155,120 @@ async function migrate() {
     END
   `);
 
-  console.log('✅ Migration complete');
+  // ── Add HourlyRate to Vehicles ───────────────────────────────────────────
+  await pool.request().query(`
+    IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Vehicles')
+    AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vehicles') AND name = 'HourlyRate')
+      ALTER TABLE Vehicles ADD HourlyRate DECIMAL(10,2) DEFAULT 0
+  `);
+
+  // ── Add missing columns to Rentals ──────────────────────────────────────
+  const rentalCols = [
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Rentals')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Rentals') AND name = 'HourlyRate')
+       ALTER TABLE Rentals ADD HourlyRate DECIMAL(10,2) DEFAULT 0`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Rentals')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Rentals') AND name = 'Hours')
+       ALTER TABLE Rentals ADD Hours INT DEFAULT 0`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Rentals')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Rentals') AND name = 'RateType')
+       ALTER TABLE Rentals ADD RateType NVARCHAR(10) DEFAULT 'daily'`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Rentals')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Rentals') AND name = 'Discount')
+       ALTER TABLE Rentals ADD Discount DECIMAL(10,2) DEFAULT 0`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Rentals')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Rentals') AND name = 'ContractNo')
+       ALTER TABLE Rentals ADD ContractNo NVARCHAR(30) NULL`,
+  ];
+  for (const s of rentalCols) await pool.request().query(s);
+
+  // ── Add vehicle document expiry fields ───────────────────────────────────
+  const vehicleDocCols = [
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Vehicles')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vehicles') AND name = 'InsuranceExpiry')
+       ALTER TABLE Vehicles ADD InsuranceExpiry DATE NULL`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Vehicles')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vehicles') AND name = 'RCExpiry')
+       ALTER TABLE Vehicles ADD RCExpiry DATE NULL`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Vehicles')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vehicles') AND name = 'FitnessExpiry')
+       ALTER TABLE Vehicles ADD FitnessExpiry DATE NULL`,
+    `IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Vehicles')
+     AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Vehicles') AND name = 'PermitExpiry')
+       ALTER TABLE Vehicles ADD PermitExpiry DATE NULL`,
+  ];
+  for (const s of vehicleDocCols) await pool.request().query(s);
+
+  // ── Add extra fields to CompanySettings ────────────────────────────────
+  const companyExtraCols = [
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'Address')
+       ALTER TABLE CompanySettings ADD Address NVARCHAR(300) NULL`,
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'Phone')
+       ALTER TABLE CompanySettings ADD Phone NVARCHAR(20) NULL`,
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'Email')
+       ALTER TABLE CompanySettings ADD Email NVARCHAR(150) NULL`,
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'GSTNo')
+       ALTER TABLE CompanySettings ADD GSTNo NVARCHAR(50) NULL`,
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'BankName')
+       ALTER TABLE CompanySettings ADD BankName NVARCHAR(100) NULL`,
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'BankAccount')
+       ALTER TABLE CompanySettings ADD BankAccount NVARCHAR(50) NULL`,
+    `IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CompanySettings') AND name = 'IFSC')
+       ALTER TABLE CompanySettings ADD IFSC NVARCHAR(20) NULL`,
+  ];
+  for (const s of companyExtraCols) await pool.request().query(s);
+
+  // ── Create Payments table ────────────────────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Payments')
+    BEGIN
+      CREATE TABLE Payments (
+        Id          INT IDENTITY(1,1) PRIMARY KEY,
+        RentalId    INT           NOT NULL REFERENCES Rentals(Id) ON DELETE CASCADE,
+        Amount      DECIMAL(12,2) NOT NULL,
+        PaidOn      DATE          NOT NULL,
+        Method      NVARCHAR(30)  DEFAULT 'Cash',
+        Note        NVARCHAR(250),
+        CompanyId   INT           NOT NULL,
+        CreatedAt   DATETIME      DEFAULT GETDATE()
+      );
+      PRINT 'Payments table created.';
+    END
+  `);
+
+  // ── Fix Vehicles.RegNo: drop global unique, add per-company unique ───────
+  await pool.request().query(`
+    DECLARE @cn2 NVARCHAR(200)
+    SELECT TOP 1 @cn2 = kc.name
+    FROM sys.key_constraints kc
+    JOIN sys.index_columns ic
+      ON kc.unique_index_id = ic.index_id AND kc.parent_object_id = ic.object_id
+    JOIN sys.columns c
+      ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+    WHERE OBJECT_NAME(kc.parent_object_id) = 'Vehicles'
+      AND kc.type = 'UQ'
+      AND c.name = 'RegNo'
+    GROUP BY kc.name
+    HAVING COUNT(*) = 1
+    IF @cn2 IS NOT NULL
+      EXEC('ALTER TABLE Vehicles DROP CONSTRAINT [' + @cn2 + ']')
+  `);
+  await pool.request().query(`
+    IF NOT EXISTS (
+      SELECT * FROM sys.indexes
+      WHERE object_id = OBJECT_ID('Vehicles')
+        AND name = 'UQ_Vehicles_RegNo_CompanyId'
+    )
+    AND EXISTS (
+      SELECT * FROM sys.columns
+      WHERE object_id = OBJECT_ID('Vehicles') AND name = 'CompanyId'
+    )
+    CREATE UNIQUE INDEX UQ_Vehicles_RegNo_CompanyId
+      ON Vehicles(RegNo, CompanyId)
+      WHERE CompanyId IS NOT NULL
+  `);
+
+  console.log('\u2705 Migration complete');
 }
 
 module.exports = migrate;

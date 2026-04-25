@@ -19,8 +19,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST create expense
+// POST create expense  (admin only)
 router.post('/', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   const { vehicleId, vehicleName, category, amount, date, description, paidBy } = req.body;
   const cid = req.user.companyId;
   try {
@@ -43,8 +44,9 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT update expense
+// PUT update expense  (admin only)
 router.put('/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   const { vehicleId, vehicleName, category, amount, date, description, paidBy } = req.body;
   const cid = req.user.companyId;
   try {
@@ -71,8 +73,9 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE expense
+// DELETE expense  (admin only)
 router.delete('/:id', async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   const cid = req.user.companyId;
   try {
     const pool = await getPool();

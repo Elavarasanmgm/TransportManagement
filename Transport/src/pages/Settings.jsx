@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Shield, User, Truck, UserCheck } from 'lucide-react';
-import { getUsers, createUser, updateUser, deleteUser, getDrivers, getCustomers } from '../services/api';
+import { getUsers, createUser, updateUser, deleteUser, getDrivers, getCustomers, getCompanySettings, updateCompanySettings } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -52,6 +52,21 @@ export default function Settings() {
     adminRole: 'நிர்வாகி - முழு அணுகல்',
     driverRole: 'ஓட்டுநர் - படை, வாடகை, தனிப்பட்ட பதிவு',
     customerRole: 'வாடிக்கையாளர் - வாடகை & தனிப்பட்ட சுயவிவரம்',
+    tabCompany: 'நிறுவனம்',
+    tabUsers: 'பயனர்கள்',
+    companyProfile: 'நிறுவன சுயவிவரம்',
+    companyProfileSub: 'வணிக விவரங்கள் & வங்கி தகவல்',
+    companyNameLabel: 'நிறுவன பெயர்',
+    logoUrl: 'லோகோ URL',
+    address: 'முகவரி',
+    phone: 'தொலைபேசி',
+    email: 'மின்னஞ்சல்',
+    gstNo: 'GST எண்',
+    bankName: 'வங்கி பெயர்',
+    bankAccount: 'கணக்கு எண்',
+    ifsc: 'IFSC குறியீடு',
+    saveCompany: 'சேமி',
+    compSaved: 'நிறுவன விவரங்கள் சேமிக்கப்பட்டன!',
   } : {
     title: 'Settings',
     subtitle: 'Manage system users and access',
@@ -86,6 +101,21 @@ export default function Settings() {
     adminRole: 'Admin - Full access',
     driverRole: 'Driver - Fleet, Rentals, own records',
     customerRole: 'Customer - Rentals & own profile',
+    tabCompany: 'Company',
+    tabUsers: 'Users',
+    companyProfile: 'Company Profile',
+    companyProfileSub: 'Business details & bank information',
+    companyNameLabel: 'Company Name',
+    logoUrl: 'Logo URL',
+    address: 'Address',
+    phone: 'Phone',
+    email: 'Email',
+    gstNo: 'GST Number',
+    bankName: 'Bank Name',
+    bankAccount: 'Bank Account No.',
+    ifsc: 'IFSC Code',
+    saveCompany: 'Save Changes',
+    compSaved: 'Company details saved successfully!',
   };
   const [users,     setUsers]     = useState([]);
   const [drivers,   setDrivers]   = useState([]);
@@ -99,19 +129,62 @@ export default function Settings() {
   const [formErr, setFormErr] = useState('');
   const [saving,  setSaving]  = useState(false);
 
+  const [activeTab,   setActiveTab]   = useState('company');
+  const [company,     setCompany]     = useState({ companyName:'', logo:'', address:'', phone:'', email:'', gstNo:'', bankName:'', bankAccount:'', ifsc:'' });
+  const [compSaving,  setCompSaving]  = useState(false);
+  const [compErr,     setCompErr]     = useState('');
+  const [compSuccess, setCompSuccess] = useState('');
+
   useEffect(() => { loadAll(); }, []);
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [u, d, c] = await Promise.all([getUsers(), getDrivers(), getCustomers()]);
+      const [u, d, c, cs] = await Promise.all([getUsers(), getDrivers(), getCustomers(), getCompanySettings()]);
       setUsers(u);
       setDrivers(d);
       setCustomers(c);
+      if (cs) setCompany({
+        companyName:  cs.CompanyName  || '',
+        logo:         cs.Logo         || '',
+        address:      cs.Address      || '',
+        phone:        cs.Phone        || '',
+        email:        cs.Email        || '',
+        gstNo:        cs.GSTNo        || '',
+        bankName:     cs.BankName     || '',
+        bankAccount:  cs.BankAccount  || '',
+        ifsc:         cs.IFSC         || '',
+      });
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCompanySave() {
+    setCompErr('');
+    setCompSuccess('');
+    if (!company.companyName.trim()) return setCompErr(isTamil ? 'நிறுவன பெயர் தேவை' : 'Company name is required');
+    setCompSaving(true);
+    try {
+      await updateCompanySettings({
+        companyName: company.companyName.trim(),
+        logo:        company.logo.trim()        || null,
+        address:     company.address.trim()     || null,
+        phone:       company.phone.trim()       || null,
+        email:       company.email.trim()       || null,
+        gstNo:       company.gstNo.trim()       || null,
+        bankName:    company.bankName.trim()    || null,
+        bankAccount: company.bankAccount.trim() || null,
+        ifsc:        company.ifsc.trim()        || null,
+      });
+      setCompSuccess(txt.compSaved);
+      setTimeout(() => setCompSuccess(''), 3500);
+    } catch (err) {
+      setCompErr(err.message);
+    } finally {
+      setCompSaving(false);
     }
   }
 
@@ -196,7 +269,59 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Tab navigation */}
+      <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+        {[
+          { key:'company', label: txt.tabCompany },
+          { key:'users',   label: txt.tabUsers   },
+        ].map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            style={{ padding:'8px 22px', borderRadius:8, border:'none', fontWeight:600, cursor:'pointer',
+                     background: activeTab===t.key ? '#3b82f6' : '#f1f5f9',
+                     color: activeTab===t.key ? '#fff' : '#64748b', fontSize:'0.9rem', transition:'all 0.15s' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Company Profile */}
+      {activeTab === 'company' && (
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="card-header">
+            <div style={{ fontWeight:700, fontSize:'1rem', color:'#1e293b' }}>{txt.companyProfile}</div>
+            <div style={{ fontSize:'0.82rem', color:'#64748b', marginTop:2 }}>{txt.companyProfileSub}</div>
+          </div>
+          {compErr     && <div className="auth-error" style={{ margin:'0 0 16px' }}>{compErr}</div>}
+          {compSuccess && <div style={{ padding:'10px 14px', background:'#d1fae5', color:'#065f46', borderRadius:8, marginBottom:16, fontWeight:600 }}>{compSuccess}</div>}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'16px 24px' }}>
+            {[
+              { key:'companyName', label:txt.companyNameLabel, required:true, span:true },
+              { key:'logo',        label:txt.logoUrl },
+              { key:'address',     label:txt.address },
+              { key:'phone',       label:txt.phone },
+              { key:'email',       label:txt.email },
+              { key:'gstNo',       label:txt.gstNo },
+              { key:'bankName',    label:txt.bankName },
+              { key:'bankAccount', label:txt.bankAccount },
+              { key:'ifsc',        label:txt.ifsc },
+            ].map(f => (
+              <div key={f.key} className="form-group" style={{ margin:0, gridColumn: f.span ? '1/-1' : undefined }}>
+                <label className="form-label">{f.label}{f.required && <span style={{color:'#dc2626'}}> *</span>}</label>
+                <input className="form-input" value={company[f.key]}
+                  onChange={e => setCompany(p => ({ ...p, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop:20, display:'flex', justifyContent:'flex-end' }}>
+            <button className="btn btn-primary" onClick={handleCompanySave} disabled={compSaving}>
+              {compSaving ? txt.saving : txt.saveCompany}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Users section */}
+      {activeTab === 'users' && (
       <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-header" style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <div>
@@ -287,6 +412,7 @@ export default function Settings() {
           </table>
         )}
       </div>
+      )}
 
       {/* Modal */}
       {modal && (

@@ -4,7 +4,20 @@ const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const { getPool, sql } = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'transport_jwt_secret_change_me';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Server will not start.');
+  process.exit(1);
+}
+
+const rateLimit = require('express-rate-limit');
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,   // 15-minute window
+  max: 10,                    // max 10 attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
+});
 
 const DEFAULT_VEHICLE_TYPES = [
   { name: 'Lorry',   emoji: '🚛', order: 1 },
@@ -101,7 +114,7 @@ router.post('/signup', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { username, password, remember } = req.body;
   if (!username || !password)
     return res.status(400).json({ error: 'Username and password are required' });
@@ -158,22 +171,31 @@ router.get('/settings', authMiddleware, async (req, res) => {
 
 // PUT /api/auth/settings
 router.put('/settings', authMiddleware, async (req, res) => {
-  const { companyName, logo } = req.body;
+  const { companyName, logo, address, phone, email, gstNo, bankName, bankAccount, ifsc } = req.body;
   if (!companyName) return res.status(400).json({ error: 'companyName is required' });
   try {
     const pool = await getPool();
     await pool.request()
-      .input('name', sql.NVarChar, companyName.trim())
-      .input('logo', sql.NVarChar, logo || null)
-      .input('cid',  sql.Int,      req.user.companyId)
+      .input('name',        sql.NVarChar, companyName.trim())
+      .input('logo',        sql.NVarChar, logo        || null)
+      .input('address',     sql.NVarChar, address     || null)
+      .input('phone',       sql.NVarChar, phone       || null)
+      .input('email',       sql.NVarChar, email       || null)
+      .input('gstNo',       sql.NVarChar, gstNo       || null)
+      .input('bankName',    sql.NVarChar, bankName    || null)
+      .input('bankAccount', sql.NVarChar, bankAccount || null)
+      .input('ifsc',        sql.NVarChar, ifsc        || null)
+      .input('cid',         sql.Int,      req.user.companyId)
       .query(`UPDATE CompanySettings
-              SET CompanyName=@name, Logo=@logo, UpdatedAt=GETDATE()
+              SET CompanyName=@name, Logo=@logo,
+                  Address=@address, Phone=@phone, Email=@email,
+                  GSTNo=@gstNo, BankName=@bankName, BankAccount=@bankAccount, IFSC=@ifsc,
+                  UpdatedAt=GETDATE()
               WHERE Id=@cid`);
     const updated = await pool.request()
       .input('cid', sql.Int, req.user.companyId)
       .query('SELECT TOP 1 * FROM CompanySettings WHERE Id = @cid');
-    const s = updated.recordset[0];
-    res.json({ name: s.CompanyName, logo: s.Logo });
+    res.json(updated.recordset[0] || {});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

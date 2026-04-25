@@ -80,3 +80,8 @@ export const getVehicleTypes   = ()      => request('/vehicle-types');
 export const createVehicleType = (data)  => request('/vehicle-types',      { method: 'POST',   body: JSON.stringify(data) });
 export const deleteVehicleType = (id)    => request(`/vehicle-types/${id}`, { method: 'DELETE' });
 
+// ---------- Payments ----------
+export const getPayments   = (rentalId) => request(`/payments${rentalId ? `?rentalId=${rentalId}` : ''}`);
+export const createPayment = (data)     => request('/payments',       { method: 'POST',   body: JSON.stringify(data) });
+export const deletePayment = (id)       => request(`/payments/${id}`, { method: 'DELETE' });
+
