@@ -1,0 +1,7 @@
+{
+  "name": "transport-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd Transport && npm install && npm run build"
+  }
+}

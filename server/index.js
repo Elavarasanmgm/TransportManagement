@@ -3,6 +3,10 @@ const express  = require('express');
 const cors     = require('cors');
 
 const app = express();
+const migrationState = {
+  ready: false,
+  error: null,
+};
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
@@ -27,19 +31,37 @@ app.use('/api/customers',     require('./routes/customers'));
 app.use('/api/dashboard',     require('./routes/dashboard'));
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', (req, res) => {
+  const payload = {
+    status: migrationState.error ? 'degraded' : 'ok',
+    migrationReady: migrationState.ready,
+    migrationError: migrationState.error,
+  };
+  if (migrationState.error) return res.status(503).json(payload);
+  return res.json(payload);
+});
+
+async function runMigration() {
+  const migrate = require('./migrate');
+  try {
+    await migrate();
+    migrationState.ready = true;
+    migrationState.error = null;
+  } catch (err) {
+    migrationState.ready = false;
+    migrationState.error = err.message;
+    console.error('Migration failed:', err.message);
+  }
+}
 
 if (require.main === module) {
   // Traditional server mode (local development)
-  const migrate = require('./migrate');
   const PORT = process.env.PORT || 5000;
-  migrate()
-    .then(() => app.listen(PORT, () => console.log(`Transport API running on port ${PORT}`)))
-    .catch(err => { console.error('Migration failed:', err.message); process.exit(1); });
+  app.listen(PORT, () => console.log(`Transport API running on port ${PORT}`));
+  runMigration();
 } else {
   // Serverless mode (Vercel) — run migration as a non-blocking side effect
-  const migrate = require('./migrate');
-  migrate().catch(err => console.error('Migration error:', err.message));
+  runMigration();
 }
 
 module.exports = app;

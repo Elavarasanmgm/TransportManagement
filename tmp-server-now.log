@@ -1,0 +1,3 @@
+Transport API running on port 5000
+❌ DB Connection failed: Failed to connect to 68.220.186.41:1433 - Could not connect (sequence)
+Migration failed: Failed to connect to 68.220.186.41:1433 - Could not connect (sequence)
