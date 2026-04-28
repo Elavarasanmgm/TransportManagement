@@ -4,10 +4,9 @@ const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const { getPool, sql } = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET environment variable is not set. Server will not start.');
-  process.exit(1);
+const JWT_SECRET = process.env.JWT_SECRET || 'transport_jwt_secret_change_me_in_production';
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET env var is not set. Using insecure default. Set it in Vercel environment variables.');
 }
 
 const rateLimit = require('express-rate-limit');
@@ -25,6 +24,14 @@ const DEFAULT_VEHICLE_TYPES = [
   { name: 'Tractor', emoji: '🚜', order: 3 },
   { name: 'Car',     emoji: '🚗', order: 4 },
 ];
+
+function handleRouteError(res, err) {
+  const status = err.status || (err.code === 'DB_UNAVAILABLE' ? 503 : 500);
+  const error = status === 503
+    ? 'Database is unavailable. Please try again shortly.'
+    : (err.message || 'Internal server error');
+  return res.status(status).json({ error });
+}
 
 // ── Auth middleware (export for other routes) ────────────────────────────────
 function authMiddleware(req, res, next) {
@@ -109,7 +116,7 @@ router.post('/signup', async (req, res) => {
       company: { name: company.CompanyName, logo: company.Logo },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleRouteError(res, err);
   }
 });
 
@@ -152,7 +159,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       company: s ? { name: s.CompanyName, logo: s.Logo } : null,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleRouteError(res, err);
   }
 });
 
@@ -165,7 +172,7 @@ router.get('/settings', authMiddleware, async (req, res) => {
       .query('SELECT TOP 1 * FROM CompanySettings WHERE Id = @cid');
     res.json(result.recordset[0] || {});
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleRouteError(res, err);
   }
 });
 
@@ -197,7 +204,7 @@ router.put('/settings', authMiddleware, async (req, res) => {
       .query('SELECT TOP 1 * FROM CompanySettings WHERE Id = @cid');
     res.json(updated.recordset[0] || {});
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleRouteError(res, err);
   }
 });
 

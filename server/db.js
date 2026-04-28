@@ -42,7 +42,11 @@ async function getPool() {
   } catch (err) {
     const msg = err.originalError?.message || err.message || String(err);
     console.error('❌ DB Connection failed:', msg);
-    throw new Error(msg);
+    const dbError = new Error('Database is unavailable. Please try again shortly.');
+    dbError.cause = err;
+    dbError.code = 'DB_UNAVAILABLE';
+    dbError.status = 503;
+    throw dbError;
   }
 }
 

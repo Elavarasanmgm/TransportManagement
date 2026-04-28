@@ -22,6 +22,8 @@ export default function Topbar({ path }) {
     '/customers': t('topbar.customers'),
     '/reports': t('topbar.reports'),
     '/settings': t('topbar.settings'),
+    '/vehicle-documents': t('topbar.vehicleDocs'),
+    '/maintenance': t('topbar.maintenance'),
   };
 
   const title   = titleMap[path] || t('topbar.transport');

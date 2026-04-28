@@ -553,3 +553,112 @@ table tr:hover td { background: #f8fafc; }
 }
 
 .req { color: #dc2626; }
+
+/* ── Page container (new pages) ────────────────────────── */
+.page-container { padding: 0; }
+
+/* ── Stats grid (new pages) ────────────────────────────── */
+.stats-grid { display: grid; gap: 16px; margin-bottom: 24px; }
+/* .stat-card already defined above; new pages override bg via inline style */
+.stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+.stat-label { font-size: 0.78rem; font-weight: 500; margin-top: 6px; opacity: 0.85; }
+/* Override default stat-card flex layout for the compact variant */
+.stats-grid .stat-card {
+  flex-direction: column; align-items: flex-start;
+  padding: 20px 24px; gap: 0;
+}
+
+/* ── Tab bar (new pages — alias for .tabs) ─────────────── */
+.tab-bar {
+  display: flex; gap: 4px;
+  background: #f1f5f9; border-radius: 10px;
+  padding: 4px; margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.tab-bar .tab-btn {
+  flex: 1; min-width: 100px;
+  padding: 8px 16px; border: none; background: transparent;
+  border-radius: 8px; font-size: 0.875rem; font-weight: 500;
+  color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-bar .tab-btn.active {
+  background: white; color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* ── Table card (white card wrapping a table) ──────────── */
+.table-card {
+  background: white; border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  overflow: hidden; margin-bottom: 24px;
+}
+
+/* ── Data table (new pages) ────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; background: white; }
+.data-table th {
+  background: #f8fafc; padding: 11px 16px;
+  text-align: left; font-size: 0.76rem; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.05em; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 11px 16px; border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem; color: #374151; vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: #f8fafc; }
+
+/* ── Modal box (alias for .modal) ──────────────────────── */
+.modal-box {
+  background: white; border-radius: 14px; padding: 28px;
+  width: 100%; max-width: 540px; max-height: 90vh;
+  overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: slideUp 0.2s ease;
+}
+
+/* ── Modal actions row ─────────────────────────────────── */
+.modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  margin-top: 24px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Form grid (2-col inside modal) ────────────────────── */
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px;
+}
+@media (max-width: 540px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* ── Btn icon (edit / delete row actions) ──────────────── */
+.btn-icon {
+  width: 30px; height: 30px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: white; cursor: pointer;
+  transition: all 0.15s; color: #64748b; font-size: 0.85rem;
+  padding: 0; margin: 0 2px;
+}
+.btn-icon:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+/* ── Btn primary / secondary (standalone — ensure padding) */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 8px; border: none;
+  font-size: 0.875rem; font-weight: 600;
+  background: var(--primary); color: white;
+  cursor: pointer; transition: background 0.2s;
+}
+.btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.875rem; font-weight: 500;
+  background: #f1f5f9; color: #475569;
+  cursor: pointer; transition: background 0.2s;
+}
+.btn-secondary:hover { background: #e2e8f0; }

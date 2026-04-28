@@ -80,6 +80,30 @@ export const getVehicleTypes   = ()      => request('/vehicle-types');
 export const createVehicleType = (data)  => request('/vehicle-types',      { method: 'POST',   body: JSON.stringify(data) });
 export const deleteVehicleType = (id)    => request(`/vehicle-types/${id}`, { method: 'DELETE' });
 
+// ---------- Vehicle Document Types ----------
+export const getVehicleDocumentTypes   = ()         => request('/vehicle-document-types');
+export const createVehicleDocumentType = (data)     => request('/vehicle-document-types',      { method: 'POST',   body: JSON.stringify(data) });
+export const updateVehicleDocumentType = (id, data) => request(`/vehicle-document-types/${id}`, { method: 'PUT',    body: JSON.stringify(data) });
+export const deleteVehicleDocumentType = (id)       => request(`/vehicle-document-types/${id}`, { method: 'DELETE' });
+
+// ---------- Vehicle Documents ----------
+export const getVehicleDocuments   = (vehicleId) => request(`/vehicle-documents${vehicleId ? `?vehicleId=${vehicleId}` : ''}`);
+export const getVehicleDocumentFile = (id)       => request(`/vehicle-documents/${id}/file`);
+export const upsertVehicleDocument = (data)      => request('/vehicle-documents',      { method: 'POST', body: JSON.stringify(data) });
+export const deleteVehicleDocument = (id)        => request(`/vehicle-documents/${id}`, { method: 'DELETE' });
+
+// ---------- Maintenance Types ----------
+export const getMaintenanceTypes   = ()         => request('/maintenance-types');
+export const createMaintenanceType = (data)     => request('/maintenance-types',      { method: 'POST',   body: JSON.stringify(data) });
+export const updateMaintenanceType = (id, data) => request(`/maintenance-types/${id}`, { method: 'PUT',    body: JSON.stringify(data) });
+export const deleteMaintenanceType = (id)       => request(`/maintenance-types/${id}`, { method: 'DELETE' });
+
+// ---------- Maintenance Records ----------
+export const getMaintenanceRecords   = (params)     => request(`/maintenance${params ? `?${new URLSearchParams(params)}` : ''}`);
+export const createMaintenanceRecord = (data)       => request('/maintenance',      { method: 'POST',   body: JSON.stringify(data) });
+export const updateMaintenanceRecord = (id, data)   => request(`/maintenance/${id}`, { method: 'PUT',    body: JSON.stringify(data) });
+export const deleteMaintenanceRecord = (id)         => request(`/maintenance/${id}`, { method: 'DELETE' });
+
 // ---------- Payments ----------
 export const getPayments   = (rentalId) => request(`/payments${rentalId ? `?rentalId=${rentalId}` : ''}`);
 export const createPayment = (data)     => request('/payments',       { method: 'POST',   body: JSON.stringify(data) });

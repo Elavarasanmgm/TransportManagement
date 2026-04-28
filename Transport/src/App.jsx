@@ -14,6 +14,8 @@ import Attendance from './pages/Attendance';
 import Customers from './pages/Customers';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import VehicleDocuments from './pages/VehicleDocuments';
+import Maintenance from './pages/Maintenance';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 
@@ -24,8 +26,8 @@ function PrivateRoute({ children }) {
 
 // Pages each role can access (driver/customer land on first item in array)
 const ROLE_ACCESS = {
-  admin:    ['/', '/vehicles', '/rentals', '/expenses', '/profit-loss', '/drivers', '/attendance', '/customers', '/reports', '/settings'],
-  driver:   ['/vehicles', '/rentals', '/drivers', '/attendance'],
+  admin:    ['/', '/vehicles', '/vehicle-documents', '/maintenance', '/rentals', '/expenses', '/profit-loss', '/drivers', '/attendance', '/customers', '/reports', '/settings'],
+  driver:   ['/vehicles', '/vehicle-documents', '/maintenance', '/rentals', '/drivers', '/attendance'],
   customer: ['/rentals', '/customers'],
 };
 
@@ -56,7 +58,9 @@ function Layout() {
             <Route path="/attendance"  element={<RoleRoute path="/attendance"> <Attendance /> </RoleRoute>} />
             <Route path="/customers"   element={<RoleRoute path="/customers">  <Customers />  </RoleRoute>} />
             <Route path="/reports"     element={<RoleRoute path="/reports">    <Reports />    </RoleRoute>} />
-            <Route path="/settings"    element={<RoleRoute path="/settings">   <Settings />   </RoleRoute>} />
+            <Route path="/settings"             element={<RoleRoute path="/settings">            <Settings />        </RoleRoute>} />
+            <Route path="/vehicle-documents"   element={<RoleRoute path="/vehicle-documents">   <VehicleDocuments /> </RoleRoute>} />
+            <Route path="/maintenance"          element={<RoleRoute path="/maintenance">          <Maintenance />      </RoleRoute>} />
           </Routes>
         </div>
       </div>

@@ -9,13 +9,14 @@ const migrationState = {
 };
 
 const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5000'];
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+  : null;
 
 app.use(cors({
   origin: (origin, callback) => {
-    // allow server-to-server / same-origin requests (no Origin header)
+    // When no explicit allowlist is configured, accept the caller's origin.
     if (!origin) return callback(null, true);
+    if (!allowedOrigins) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
@@ -35,6 +36,10 @@ app.use('/api/attendance',    require('./routes/attendance'));
 app.use('/api/customers',     require('./routes/customers'));
 app.use('/api/dashboard',     require('./routes/dashboard'));
 app.use('/api/payments',      require('./routes/payments'));
+app.use('/api/vehicle-document-types', require('./routes/vehicleDocumentTypes'));
+app.use('/api/vehicle-documents',      require('./routes/vehicleDocuments'));
+app.use('/api/maintenance-types',      require('./routes/maintenanceTypes'));
+app.use('/api/maintenance',            require('./routes/maintenance'));
 
 // Health check
 app.get('/api/health', (req, res) => {

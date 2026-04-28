@@ -38,6 +38,8 @@ const translations = {
       customers: 'Customers',
       reports: 'Reports',
       settings: 'Settings',
+      vehicleDocs: 'Vehicle Documents',
+      maintenance: 'Maintenance',
       transport: 'Transport',
     },
     sidebar: {
@@ -57,6 +59,8 @@ const translations = {
       reports: 'Reports',
       system: 'System',
       settings: 'Settings',
+      vehicleDocs: 'Vehicle Documents',
+      maintenance: 'Maintenance',
     },
   },
   ta: {
@@ -94,6 +98,8 @@ const translations = {
       customers: 'வாடிக்கையாளர்கள்',
       reports: 'அறிக்கைகள்',
       settings: 'அமைப்புகள்',
+      vehicleDocs: 'வாகன ஆவணங்கள்',
+      maintenance: 'பராமரிப்பு',
       transport: 'டிரான்ஸ்போர்ட்',
     },
     sidebar: {
@@ -113,6 +119,8 @@ const translations = {
       reports: 'அறிக்கைகள்',
       system: 'அமைப்பு',
       settings: 'அமைப்புகள்',
+      vehicleDocs: 'வாகன ஆவணங்கள்',
+      maintenance: 'பராமரிப்பு',
     },
   },
 };

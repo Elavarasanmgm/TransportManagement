@@ -268,7 +268,131 @@ async function migrate() {
       WHERE CompanyId IS NOT NULL
   `);
 
-  console.log('\u2705 Migration complete');
+  // ── VehicleDocumentTypes ──────────────────────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'VehicleDocumentTypes') AND type='U')
+    CREATE TABLE VehicleDocumentTypes (
+      Id                 INT IDENTITY PRIMARY KEY,
+      Name               NVARCHAR(100) NOT NULL,
+      Emoji              NVARCHAR(10)  DEFAULT '📄',
+      DefaultValidityDays INT          DEFAULT 365,
+      IsSystem           BIT           DEFAULT 0,
+      CompanyId          INT           NOT NULL,
+      CreatedAt          DATETIME      DEFAULT GETDATE()
+    )
+  `);
+
+  // ── VehicleDocuments ──────────────────────────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'VehicleDocuments') AND type='U')
+    CREATE TABLE VehicleDocuments (
+      Id          INT IDENTITY PRIMARY KEY,
+      VehicleId   INT           NOT NULL,
+      VehicleName NVARCHAR(150) DEFAULT '',
+      TypeId      INT           NOT NULL,
+      TypeName    NVARCHAR(100) DEFAULT '',
+      DocNo       NVARCHAR(100) DEFAULT '',
+      IssueDate   DATE          NULL,
+      ExpiryDate  DATE          NULL,
+      Notes       NVARCHAR(500) DEFAULT '',
+      CompanyId   INT           NOT NULL,
+      UpdatedAt   DATETIME      DEFAULT GETDATE()
+    )
+  `);
+
+  await pool.request().query(`
+    IF NOT EXISTS (
+      SELECT * FROM sys.indexes
+      WHERE object_id = OBJECT_ID('VehicleDocuments') AND name = 'UQ_VehicleDocuments_VehicleType'
+    )
+    CREATE UNIQUE INDEX UQ_VehicleDocuments_VehicleType
+      ON VehicleDocuments(VehicleId, TypeId, CompanyId)
+  `);
+
+  // ── Add file upload columns to VehicleDocuments (idempotent) ──────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('VehicleDocuments') AND name = 'FileName')
+      ALTER TABLE VehicleDocuments ADD FileName NVARCHAR(260) NULL
+  `);
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('VehicleDocuments') AND name = 'FileType')
+      ALTER TABLE VehicleDocuments ADD FileType NVARCHAR(100) NULL
+  `);
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('VehicleDocuments') AND name = 'FileData')
+      ALTER TABLE VehicleDocuments ADD FileData NVARCHAR(MAX) NULL
+  `);
+
+  // ── Seed VehicleDocumentTypes (company 1) ────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT 1 FROM VehicleDocumentTypes WHERE CompanyId=1 AND IsSystem=1)
+    BEGIN
+      INSERT INTO VehicleDocumentTypes (Name, Emoji, DefaultValidityDays, IsSystem, CompanyId) VALUES
+        (N'Insurance',       N'📋', 365,  1, 1),
+        (N'Road Tax',        N'💰', 365,  1, 1),
+        (N'RC (Registration Certificate)', N'🚗', 1825, 1, 1),
+        (N'Fitness Certificate', N'✅', 730,  1, 1),
+        (N'Permit',          N'📄', 365,  1, 1),
+        (N'Pollution (PUC)', N'🌿', 180,  1, 1),
+        (N'National Permit', N'🗺️', 365,  1, 1)
+    END
+  `);
+
+  // ── MaintenanceTypes ──────────────────────────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'MaintenanceTypes') AND type='U')
+    CREATE TABLE MaintenanceTypes (
+      Id                  INT IDENTITY PRIMARY KEY,
+      Name                NVARCHAR(100) NOT NULL,
+      Emoji               NVARCHAR(10)  DEFAULT '🔧',
+      DefaultKmInterval   INT           NULL,
+      DefaultDaysInterval INT           NULL,
+      IsSystem            BIT           DEFAULT 0,
+      CompanyId           INT           NOT NULL,
+      CreatedAt           DATETIME      DEFAULT GETDATE()
+    )
+  `);
+
+  // ── MaintenanceRecords ────────────────────────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'MaintenanceRecords') AND type='U')
+    CREATE TABLE MaintenanceRecords (
+      Id          INT IDENTITY PRIMARY KEY,
+      VehicleId   INT            NOT NULL,
+      VehicleName NVARCHAR(150)  DEFAULT '',
+      TypeId      INT            NOT NULL,
+      TypeName    NVARCHAR(100)  DEFAULT '',
+      ServiceDate DATE           NOT NULL,
+      KmAtService INT            NULL,
+      NextDueDate DATE           NULL,
+      NextDueKm   INT            NULL,
+      Cost        DECIMAL(12,2)  DEFAULT 0,
+      DoneBy      NVARCHAR(150)  DEFAULT '',
+      Notes       NVARCHAR(500)  DEFAULT '',
+      CompanyId   INT            NOT NULL,
+      CreatedAt   DATETIME       DEFAULT GETDATE()
+    )
+  `);
+
+  // ── Seed MaintenanceTypes (company 1) ────────────────────────────────────
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT 1 FROM MaintenanceTypes WHERE CompanyId=1 AND IsSystem=1)
+    BEGIN
+      INSERT INTO MaintenanceTypes (Name, Emoji, DefaultKmInterval, DefaultDaysInterval, IsSystem, CompanyId) VALUES
+        (N'Engine Oil Change',       N'🛢️', 5000,  90,   1, 1),
+        (N'Tyre Rotation/Change',    N'🔄', 10000, 180,  1, 1),
+        (N'Air Filter',              N'💨', 10000, 180,  1, 1),
+        (N'Battery Check/Replace',   N'🔋', NULL,  365,  1, 1),
+        (N'Brake Service',           N'🔧', 15000, 180,  1, 1),
+        (N'Transmission Service',    N'⚙️', 40000, 365,  1, 1),
+        (N'Coolant Flush',           N'🌡️', 40000, 730,  1, 1),
+        (N'Clutch Service',          N'🔩', 50000, NULL, 1, 1),
+        (N'Suspension Check',        N'🚗', 20000, 180,  1, 1),
+        (N'Fuel Filter',             N'⛽', 15000, 180,  1, 1)
+    END
+  `);
+
+  console.log('✅ Migration complete');
 }
 
 module.exports = migrate;

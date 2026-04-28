@@ -2,14 +2,16 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
-  LayoutDashboard, Truck, CalendarCheck, Receipt,
+  LayoutDashboard, Truck, FileText, Wrench, CalendarCheck, Receipt,
   TrendingUp, UserCheck, Users, Settings, X, BarChart2
 } from 'lucide-react';
 
 const navItems = [
   { labelKey: 'sidebar.dashboard', icon: LayoutDashboard, path: '/', roles: ['admin'] },
   { sectionKey: 'sidebar.fleet', roles: ['admin', 'driver'] },
-  { labelKey: 'sidebar.fleetVehicles', icon: Truck, path: '/vehicles', roles: ['admin', 'driver'] },
+  { labelKey: 'sidebar.fleetVehicles', icon: Truck,     path: '/vehicles',          roles: ['admin', 'driver'] },
+  { labelKey: 'sidebar.vehicleDocs',   icon: FileText,  path: '/vehicle-documents', roles: ['admin', 'driver'] },
+  { labelKey: 'sidebar.maintenance',   icon: Wrench,    path: '/maintenance',       roles: ['admin', 'driver'] },
   { sectionKey: 'sidebar.operations', roles: ['admin', 'driver', 'customer'] },
   { labelKey: 'sidebar.rentals', icon: CalendarCheck, path: '/rentals', roles: ['admin', 'driver', 'customer'] },
   { labelKey: 'sidebar.expenses', icon: Receipt, path: '/expenses', roles: ['admin'] },
